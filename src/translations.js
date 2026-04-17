@@ -1,0 +1,107 @@
+const t = {
+    en: {
+        // Navbar
+        home: 'Home',
+        ourLeaders: 'Our Leaders',
+        ourPeople: 'Our People',
+        joinVolunteer: '🤝 Join as Volunteer',
+
+        // Header
+        orgName: 'Nagar Vikas Samiti',
+
+        // Home — Our Work
+        ourWork: 'Our Work',
+        images: 'Images',
+        videos: 'Videos',
+        noActivities: 'No activities yet.',
+
+        // Home — Notice Board
+        noticeBoard: 'Notice Board',
+        announcement: 'Announcement',
+        dailyThought: 'Daily Thought',
+        noAnnouncement: 'No Announcement Yet',
+        noDailyThought: 'No Daily Thought Yet',
+        checkBackSoon: 'Check back soon for updates.',
+
+        // Volunteer Modal
+        volunteerApplication: 'Volunteer Application',
+        applicationReceived: 'Application Received!',
+        fullName: 'Full Name',
+        mobile: 'Mobile',
+        address: 'Address',
+        pincode: 'Pincode',
+        level: 'Level',
+        serious: 'Serious',
+        casual: 'Casual',
+        submitApplication: 'Submit Application',
+        verifying: 'Verifying...',
+        detectingLocation: 'Detecting location...',
+        geolocationNotSupported: 'Geolocation not supported.',
+        locationVerified: (code) => `Location verified! Pincode: ${code}`,
+        autofillFailed: 'Auto-detection failed. Please enter your Pincode manually below.',
+        accessDenied: 'Location access denied.',
+        failedSubmit: 'Failed to submit.',
+
+
+        // Footer
+        footerTagline: 'Empowering communities and building a better city together — one neighbourhood at a time.',
+        followUs: 'Follow Us',
+        contactUs: 'Contact Us',
+        footerCopy: '© 2024 Nagar Vikas Samiti. All rights reserved.',
+        footerMotto: 'Empowering Communities, Developing Cities.',
+    },
+    hi: {
+        // Navbar
+        home: 'होम',
+        ourLeaders: 'हमारे नेता',
+        ourPeople: 'हमारे लोग',
+        joinVolunteer: '🤝 स्वयंसेवक बनें',
+
+        // Header
+        orgName: 'नगर विकास समिति',
+
+        // Home — Our Work
+        ourWork: 'हमारा कार्य',
+        images: 'चित्र',
+        videos: 'वीडियो',
+        noActivities: 'अभी तक कोई गतिविधि नहीं।',
+
+        // Home — Notice Board
+        noticeBoard: 'सूचना पट्ट',
+        announcement: 'घोषणा',
+        dailyThought: 'दैनिक विचार',
+        noAnnouncement: 'अभी कोई घोषणा नहीं',
+        noDailyThought: 'अभी कोई दैनिक विचार नहीं',
+        checkBackSoon: 'जल्द ही अपडेट के लिए वापस देखें।',
+
+        // Volunteer Modal
+        volunteerApplication: 'स्वयंसेवक आवेदन',
+        applicationReceived: 'आवेदन प्राप्त हुआ!',
+        fullName: 'पूरा नाम',
+        mobile: 'मोबाइल',
+        address: 'पता',
+        pincode: 'पिन कोड',
+        level: 'स्तर',
+        serious: 'गंभीर',
+        casual: 'सामान्य',
+        submitApplication: 'आवेदन जमा करें',
+        verifying: 'सत्यापन हो रहा है...',
+        detectingLocation: 'स्थान का पता लगाया जा रहा है...',
+        geolocationNotSupported: 'जियोलोकेशन समर्थित नहीं है।',
+        locationVerified: (code) => `स्थान सत्यापित! पिन कोड: ${code}`,
+        autofillFailed: 'स्वतः पहचान विफल। कृपया नीचे पिन कोड दर्ज करें।',
+        accessDenied: 'स्थान की अनुमति अस्वीकार।',
+        failedSubmit: 'जमा करने में विफल।',
+
+
+        // Footer
+        footerTagline: 'समुदायों को सशक्त बनाना और मिलकर एक बेहतर शहर बनाना — एक मोहल्ले से एक कदम आगे।',
+        followUs: 'हमें फ़ॉलो करें',
+        contactUs: 'संपर्क करें',
+        footerCopy: '© 2024 नगर विकास समिति। सर्वाधिकार सुरक्षित।',
+        footerMotto: 'समुदायों को सशक्त बनाना, शहरों का विकास करना।',
+    }
+};
+
+export const useT = (lang) => t[lang];
+export default t;

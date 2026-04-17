@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&display=swap');
+
+:root {
+  --primary: #FF9933; /* Saffron - Indian Flag */
+  --secondary: #138808; /* Green - Indian Flag */
+  --accent: #000080; /* Navy Blue - Ashoka Chakra */
+  --light: #F8F9FA;
+  --dark: #212529;
+  --glass: rgba(255, 255, 255, 0.8);
+  --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--light);
+  color: var(--dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+}
+
+.premium-card {
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-5px);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #e68a2e;
+  box-shadow: 0 4px 15px rgba(255, 153, 51, 0.4);
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  border-bottom: 3px solid var(--primary);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.flag-section {
+  width: 60px;
+}
+
+.navbar {
+  background: var(--dark) !important;
+  padding: 0.5rem 2rem;
+}
+
+.navbar-brand, .nav-link {
+  color: white !important;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  color: var(--primary) !important;
+}
