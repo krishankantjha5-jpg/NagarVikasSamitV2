@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Button, Card, Modal, Alert, Carousel, Badge } from 'react-bootstrap';
 import axios from 'axios';
 import { Bell, Quote, Calendar, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 import { useLang } from '../LanguageContext';
 import { useT } from '../translations';
 
@@ -21,8 +23,8 @@ const Home = () => {
         const fetchData = async () => {
             try {
                 const [workRes, postsRes] = await Promise.all([
-                    axios.get('http://localhost:8000/activities'),
-                    axios.get('http://localhost:8000/posts')
+                    axios.get(`${API_BASE_URL}/activities`),
+                    axios.get(`${API_BASE_URL}/posts`)
                 ]);
                 setActivities(workRes.data);
                 if (workRes.data.length > 0) setSelectedActivity(workRes.data[0]);
@@ -229,7 +231,7 @@ const Home = () => {
                             if (volunteerData.pincode) { 
                                 setVerificationLoading(true);
                                 try {
-                                    await axios.post('http://localhost:8000/volunteers', volunteerData);
+                                    await axios.post(`${API_BASE_URL}/volunteers`, volunteerData);
                                     setIsSubmitted(true); 
                                     setTimeout(() => setShowVolunteerModal(false), 3000); 
                                 } catch (err) {

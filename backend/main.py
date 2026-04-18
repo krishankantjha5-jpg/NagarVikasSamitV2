@@ -25,9 +25,13 @@ if os.path.exists("./dist"):
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
+# Change this:
+# allow_origins=["*"]
+
+# To this (Production Grade):
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[os.getenv("FRONTEND_URL", "*")], # Set this in Azure Environment Variables
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

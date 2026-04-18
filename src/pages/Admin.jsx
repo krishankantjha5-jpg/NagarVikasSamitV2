@@ -3,6 +3,8 @@ import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Nav, Tab, Tabl
 import axios from 'axios';
 import { Edit } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const Admin = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -33,9 +35,9 @@ const Admin = () => {
     const refreshData = async () => {
         try {
             const [aRes, pRes, vRes] = await Promise.all([
-                axios.get('http://localhost:8000/activities'),
-                axios.get('http://localhost:8000/posts'),
-                axios.get('http://localhost:8000/volunteers')
+                axios.get(`${API_BASE_URL}/activities`),
+                axios.get(`${API_BASE_URL}/posts`),
+                axios.get(`${API_BASE_URL}/volunteers`)
             ]);
             setActivities(aRes.data);
             setPosts(pRes.data);
@@ -46,7 +48,7 @@ const Admin = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:8000/login', credentials);
+            const res = await axios.post(`${API_BASE_URL}/login`, credentials);
             if (res.data.access_token) {
                 setIsLoggedIn(true);
                 setLoginError('');
@@ -64,7 +66,7 @@ const Admin = () => {
             for (let file of workFiles) {
                 const formData = new FormData();
                 formData.append('file', file);
-                const res = await axios.post('http://localhost:8000/upload', formData);
+                const res = await axios.post(`${API_BASE_URL}/upload`, formData);
                 mediaList.push({ url: res.data.image_url, file_type: 'image' });
             }
 
@@ -78,10 +80,10 @@ const Admin = () => {
             const data = { ...workForm, media: mediaList };
 
             if (editMode.type === 'work') {
-                await axios.put(`http://localhost:8000/activities/${editMode.id}`, data);
+                await axios.put(`${API_BASE_URL}/activities/${editMode.id}`, data);
                 setSuccessMsg('Activity updated!');
             } else {
-                await axios.post('http://localhost:8000/activities', data);
+                await axios.post(`${API_BASE_URL}/activities`, data);
                 setSuccessMsg('Activity added!');
             }
 
@@ -99,17 +101,17 @@ const Admin = () => {
             if (postFile) {
                 const formData = new FormData();
                 formData.append('file', postFile);
-                const res = await axios.post('http://localhost:8000/upload', formData);
+                const res = await axios.post(`${API_BASE_URL}/upload`, formData);
                 imageUrl = res.data.image_url;
             }
 
             const data = { ...postForm, post_type: type, image_url: imageUrl };
 
             if (editMode.id && editMode.type === type) {
-                await axios.put(`http://localhost:8000/posts/${editMode.id}`, data);
+                await axios.put(`${API_BASE_URL}/posts/${editMode.id}`, data);
                 setSuccessMsg('Post updated!');
             } else {
-                await axios.post('http://localhost:8000/posts', data);
+                await axios.post(`${API_BASE_URL}/posts`, data);
                 setSuccessMsg('Post created!');
             }
 
@@ -146,13 +148,13 @@ const Admin = () => {
 
     if (!isLoggedIn) {
         return (
-            <Container className="py-5 d-flex justify-content-center align-items-center" style={{minHeight: '60vh'}}>
-                <Card className="p-4 shadow-lg border-0" style={{maxWidth: '400px', width: '100%', borderRadius: '15px'}}>
+            <Container className="py-5 d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <Card className="p-4 shadow-lg border-0" style={{ maxWidth: '400px', width: '100%', borderRadius: '15px' }}>
                     <h2 className="text-center mb-4 text-primary fw-bold">Admin Login</h2>
                     {loginError && <Alert variant="danger">{loginError}</Alert>}
                     <Form onSubmit={handleLogin}>
-                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Username</Form.Label><Form.Control type="text" required style={inputStyle} onChange={e => setCredentials({...credentials, username: e.target.value})} /></Form.Group>
-                        <Form.Group className="mb-4"><Form.Label className="fw-bold">Password</Form.Label><Form.Control type="password" required style={inputStyle} onChange={e => setCredentials({...credentials, password: e.target.value})} /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Username</Form.Label><Form.Control type="text" required style={inputStyle} onChange={e => setCredentials({ ...credentials, username: e.target.value })} /></Form.Group>
+                        <Form.Group className="mb-4"><Form.Label className="fw-bold">Password</Form.Label><Form.Control type="password" required style={inputStyle} onChange={e => setCredentials({ ...credentials, password: e.target.value })} /></Form.Group>
                         <Button variant="primary" type="submit" className="w-100 py-2 fw-bold">Login</Button>
                     </Form>
                 </Card>
@@ -164,7 +166,7 @@ const Admin = () => {
         <Container className="py-5">
             <h1 className="mb-4 text-center fw-bold">Nagar Vikas Samiti Management</h1>
             {successMsg && <Alert variant="success" className="mb-4 text-center fw-bold">{successMsg}</Alert>}
-            
+
             <Tab.Container defaultActiveKey="work">
                 <Row className="g-4">
                     <Col lg={3}>
@@ -182,8 +184,8 @@ const Admin = () => {
                                 <Card className="p-4 shadow border mb-4">
                                     <h3 className="mb-4 text-indigo fw-bold">{editMode.type === 'work' ? 'Edit Activity' : 'Create New Activity'}</h3>
                                     <Form key={formKey} onSubmit={handleWorkSubmit}>
-                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Title</Form.Label><Form.Control type="text" required style={inputStyle} value={workForm.title} onChange={e => setWorkForm({...workForm, title: e.target.value})} /></Form.Group>
-                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Description</Form.Label><Form.Control as="textarea" rows={2} required style={inputStyle} value={workForm.description} onChange={e => setWorkForm({...workForm, description: e.target.value})} /></Form.Group>
+                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Title</Form.Label><Form.Control type="text" required style={inputStyle} value={workForm.title} onChange={e => setWorkForm({ ...workForm, title: e.target.value })} /></Form.Group>
+                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Description</Form.Label><Form.Control as="textarea" rows={2} required style={inputStyle} value={workForm.description} onChange={e => setWorkForm({ ...workForm, description: e.target.value })} /></Form.Group>
                                         <Form.Group className="mb-3"><Form.Label className="fw-bold">Photos (Upload new)</Form.Label><Form.Control type="file" multiple accept="image/*" style={inputStyle} onChange={e => setWorkFiles(Array.from(e.target.files))} /></Form.Group>
                                         <Form.Group className="mb-4"><Form.Label className="fw-bold">YouTube Links (One per line)</Form.Label><Form.Control as="textarea" rows={2} style={inputStyle} value={videoUrls.join('\n')} onChange={e => setVideoUrls(e.target.value.split('\n'))} /></Form.Group>
                                         <div className="d-flex gap-2">
@@ -217,9 +219,9 @@ const Admin = () => {
                                 <Card className="p-4 shadow border mb-4">
                                     <h3 className="mb-4 text-indigo fw-bold">{editMode.id ? 'Edit Announcement' : 'New Announcement'}</h3>
                                     <Form key={formKey} onSubmit={e => handlePostSubmit(e, postForm.post_type)}>
-                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Type</Form.Label><Form.Select style={inputStyle} value={postForm.post_type} onChange={e => setPostForm({...postForm, post_type: e.target.value})}><option value="thought">Daily Thought</option><option value="campaign">Announcement</option></Form.Select></Form.Group>
-                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Subject</Form.Label><Form.Control type="text" required style={inputStyle} value={postForm.subject} onChange={e => setPostForm({...postForm, subject: e.target.value})} /></Form.Group>
-                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Content</Form.Label><Form.Control as="textarea" rows={3} required style={inputStyle} value={postForm.content} onChange={e => setPostForm({...postForm, content: e.target.value})} /></Form.Group>
+                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Type</Form.Label><Form.Select style={inputStyle} value={postForm.post_type} onChange={e => setPostForm({ ...postForm, post_type: e.target.value })}><option value="thought">Daily Thought</option><option value="campaign">Announcement</option></Form.Select></Form.Group>
+                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Subject</Form.Label><Form.Control type="text" required style={inputStyle} value={postForm.subject} onChange={e => setPostForm({ ...postForm, subject: e.target.value })} /></Form.Group>
+                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Content</Form.Label><Form.Control as="textarea" rows={3} required style={inputStyle} value={postForm.content} onChange={e => setPostForm({ ...postForm, content: e.target.value })} /></Form.Group>
                                         <Form.Group className="mb-4"><Form.Label className="fw-bold">Image (Optional)</Form.Label><Form.Control type="file" accept="image/*" style={inputStyle} onChange={e => setPostFile(e.target.files[0])} /></Form.Group>
                                         <div className="d-flex gap-2">
                                             <Button variant="primary" type="submit" disabled={loading} className="px-5 fw-bold">{loading ? <Spinner size="sm" /> : (editMode.id ? 'Update' : 'Post Now')}</Button>
