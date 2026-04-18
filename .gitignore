@@ -25,4 +25,4 @@ dist-ssr
 
 README.md
 
-.db
+*.db
