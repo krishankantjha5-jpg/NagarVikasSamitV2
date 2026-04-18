@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from azure.storage.blob import BlobServiceClient
 from typing import List
 import os
 import shutil
@@ -129,13 +130,29 @@ def login(admin: schemas.AdminLogin):
 
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
+    # Get the Azure connection string from environment variables
+    AZURE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    CONTAINER_NAME = "images"
+
+    if not AZURE_CONNECTION_STRING:
+        raise HTTPException(status_code=500, detail="Storage not configured")
+
+    # Generate a unique filename
     file_extension = os.path.splitext(file.filename)[1]
     unique_filename = f"{int(time.time()*1000)}{file_extension}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    # Include full origin for local cross-port development visibility
-    return {"image_url": f"http://localhost:8000/uploads/{unique_filename}"}
+
+    try:
+        # Connect to Azure
+        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONNECTION_STRING)
+        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=unique_filename)
+        
+        # Upload the file
+        blob_client.upload_blob(file.file, overwrite=True)
+        
+        # Return the public Azure URL
+        return {"image_url": blob_client.url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 def health():
