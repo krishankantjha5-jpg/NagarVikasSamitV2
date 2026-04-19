@@ -15,16 +15,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Zip ONLY backend folder
-      - name: Package backend app
+      # Prepare app at ROOT level (IMPORTANT FIX)
+      - name: Prepare deployment package
         run: |
-          cd backend
-          zip -r ../app.zip .
+          cp -r backend/* .
+          zip -r app.zip .
 
       # Deploy to Azure App Service
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: nagarvikassamit
+          app-name: nagarvikassamit   # ✅ your actual app name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: app.zip
