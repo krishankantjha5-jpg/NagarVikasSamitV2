@@ -4,8 +4,6 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
-
-
 load_dotenv() # Loads local variables if testing on your computer
 
 # If DATABASE_URL is set (in Azure), use it. Otherwise, fall back to local SQLite for testing.
