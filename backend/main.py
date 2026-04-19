@@ -15,6 +15,8 @@ import models, schemas
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Nagar Vikas Samiti API")
+import os
+print("ACTUAL DB URL:", os.getenv("DATABASE_URL"))
 
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
