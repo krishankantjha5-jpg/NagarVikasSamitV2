@@ -41,7 +41,9 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "*")],
+    allow_origins=[
+        "https://green-moss-011318700.7.azurestaticapps.net"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
