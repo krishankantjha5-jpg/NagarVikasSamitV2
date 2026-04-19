@@ -88,7 +88,6 @@ function App() {
     </LanguageProvider>
   );
 }
-
 const Container = ({ children }) => <div className="container">{children}</div>;
 
 export default App;
