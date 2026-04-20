@@ -39,11 +39,11 @@ if os.path.exists("./dist"):
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+print(f"CORS origins loaded: {origins}") # Helps debug Azure logs if frontend fails to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://green-moss-011318700.7.azurestaticapps.net"
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -124,22 +124,28 @@ def login(admin: schemas.AdminLogin):
 # FILE UPLOAD
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
-    AZURE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-    CONTAINER_NAME = "images"
-
-    if not AZURE_CONNECTION_STRING:
-        raise HTTPException(status_code=500, detail="Storage not configured")
-
+    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     file_extension = os.path.splitext(file.filename)[1]
     unique_filename = f"{int(time.time()*1000)}{file_extension}"
 
-    try:
-        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONNECTION_STRING)
-        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=unique_filename)
+    # --- CASE A: AZURE DEPLOYMENT ---
+    if connection_string:
+        CONTAINER_NAME = "images"
+        try:
+            blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+            blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=unique_filename)
+            blob_client.upload_blob(file.file, overwrite=True)
+            return {"image_url": blob_client.url}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Azure Upload Failed: {str(e)}")
 
-        blob_client.upload_blob(file.file, overwrite=True)
-
-        return {"image_url": blob_client.url}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # --- CASE B: LOCAL DEVELOPMENT (Fallback) ---
+    else:
+        # Save to the local 'uploads' folder you already defined
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Return a relative URL that your frontend can use via the /uploads mount
+        # Ensure your VITE_API_URL is set correctly in frontend .env
+        return {"image_url": f"/uploads/{unique_filename}"}
