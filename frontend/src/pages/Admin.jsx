@@ -20,10 +20,11 @@ const Admin = () => {
     // Form State
     const [editMode, setEditMode] = useState({ id: null, type: null }); // {id, type: 'work'|'post'}
     const [workForm, setWorkForm] = useState({ title: '', description: '', media: [] });
-    const [postForm, setPostForm] = useState({ subject: '', content: '', post_type: 'thought' });
+    const [postForm, setPostForm] = useState({ subject: '', content: '', post_type: 'thought', media: [] });
     const [workFiles, setWorkFiles] = useState([]);
-    const [postFile, setPostFile] = useState(null);
+    const [postFiles, setPostFiles] = useState([]); // New: Multiple post images
     const [videoUrls, setVideoUrls] = useState(['']);
+    const [postVideoUrls, setPostVideoUrls] = useState(['']); // New: Multiple post video links
     const [formKey, setFormKey] = useState(0); // increment to force-clear file inputs
 
     useEffect(() => {
@@ -97,17 +98,26 @@ const Admin = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            let imageUrl = postForm.image_url;
-            if (postFile) {
+            let mediaList = [...(postForm.media || [])];
+
+            // Upload new photos
+            for (let file of postFiles) {
                 const formData = new FormData();
-                formData.append('file', postFile);
+                formData.append('file', file);
                 const res = await axios.post(`${API_BASE_URL}/upload`, formData);
-                imageUrl = res.data.image_url;
+                mediaList.push({ url: res.data.image_url, file_type: 'image' });
             }
 
-            const data = { ...postForm, post_type: type, image_url: imageUrl };
+            // Process video URLs
+            postVideoUrls.filter(v => v.trim() !== '').forEach(v => {
+                if (!mediaList.find(m => m.url === v)) {
+                    mediaList.push({ url: v, file_type: 'video' });
+                }
+            });
 
-            if (editMode.id && editMode.type === type) {
+            const data = { ...postForm, post_type: type, media: mediaList };
+
+            if (editMode.id) {
                 await axios.put(`${API_BASE_URL}/posts/${editMode.id}`, data);
                 setSuccessMsg('Post updated!');
             } else {
@@ -128,16 +138,18 @@ const Admin = () => {
             setWorkForm({ title: item.title, description: item.description, media: item.media });
             setVideoUrls(item.media.filter(m => m.file_type === 'video').map(m => m.url));
         } else {
-            setPostForm({ subject: item.subject, content: item.content, post_type: item.post_type, image_url: item.image_url });
+            setPostForm({ subject: item.subject, content: item.content, post_type: item.post_type, image_url: item.image_url, media: item.media });
+            setPostVideoUrls(item.media.filter(m => m.file_type === 'video').map(m => m.url));
         }
     };
 
     const resetForm = () => {
         setEditMode({ id: null, type: null });
         setWorkForm({ title: '', description: '', media: [] });
-        setPostForm({ subject: '', content: '', post_type: 'thought' });
+        setPostForm({ subject: '', content: '', post_type: 'thought', media: [] });
         setWorkFiles([]);
-        setPostFile(null);
+        setPostFiles([]);
+        setPostVideoUrls(['']);
         setVideoUrls(['']);
         setFormKey(k => k + 1); // re-mount forms to clear file inputs
         setTimeout(() => setSuccessMsg(''), 3000);
@@ -222,7 +234,15 @@ const Admin = () => {
                                         <Form.Group className="mb-3"><Form.Label className="fw-bold">Type</Form.Label><Form.Select style={inputStyle} value={postForm.post_type} onChange={e => setPostForm({ ...postForm, post_type: e.target.value })}><option value="thought">Daily Thought</option><option value="campaign">Announcement</option></Form.Select></Form.Group>
                                         <Form.Group className="mb-3"><Form.Label className="fw-bold">Subject</Form.Label><Form.Control type="text" required style={inputStyle} value={postForm.subject} onChange={e => setPostForm({ ...postForm, subject: e.target.value })} /></Form.Group>
                                         <Form.Group className="mb-3"><Form.Label className="fw-bold">Content</Form.Label><Form.Control as="textarea" rows={3} required style={inputStyle} value={postForm.content} onChange={e => setPostForm({ ...postForm, content: e.target.value })} /></Form.Group>
-                                        <Form.Group className="mb-4"><Form.Label className="fw-bold">Image (Optional)</Form.Label><Form.Control type="file" accept="image/*" style={inputStyle} onChange={e => setPostFile(e.target.files[0])} /></Form.Group>
+                                        
+                                        {postForm.post_type === 'campaign' ? (
+                                            <>
+                                                <Form.Group className="mb-3"><Form.Label className="fw-bold">Photos (Upload multiple)</Form.Label><Form.Control type="file" multiple accept="image/*" style={inputStyle} onChange={e => setPostFiles(Array.from(e.target.files))} /></Form.Group>
+                                                <Form.Group className="mb-4"><Form.Label className="fw-bold">YouTube Links (One per line)</Form.Label><Form.Control as="textarea" rows={2} style={inputStyle} value={postVideoUrls.join('\n')} onChange={e => setPostVideoUrls(e.target.value.split('\n'))} /></Form.Group>
+                                            </>
+                                        ) : (
+                                            <Form.Group className="mb-4"><Form.Label className="fw-bold">Image (Optional)</Form.Label><Form.Control type="file" accept="image/*" style={inputStyle} onChange={e => setPostFiles(e.target.files[0] ? [e.target.files[0]] : [])} /></Form.Group>
+                                        )}
                                         <div className="d-flex gap-2">
                                             <Button variant="primary" type="submit" disabled={loading} className="px-5 fw-bold">{loading ? <Spinner size="sm" /> : (editMode.id ? 'Update' : 'Post Now')}</Button>
                                             {editMode.id && <Button variant="secondary" onClick={resetForm}>Cancel</Button>}

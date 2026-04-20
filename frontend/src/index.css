@@ -83,3 +83,40 @@ h1, h2, h3, h4 {
 .nav-link:hover {
   color: var(--primary) !important;
 }
+
+/* Post Media Carousel Styling */
+.post-media-carousel,
+.post-media-carousel .carousel-inner,
+.post-media-carousel .carousel-item {
+    height: 100%;
+}
+
+.post-media-carousel .carousel-inner {
+    border-bottom: 3px solid #f8f9fa;
+}
+
+.post-media-carousel .carousel-indicators [data-bs-target] {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.8);
+    margin: 0 4px;
+}
+
+.post-media-carousel .carousel-control-prev,
+.post-media-carousel .carousel-control-next {
+    width: 10%;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.post-media-carousel:hover .carousel-control-prev,
+.post-media-carousel:hover .carousel-control-next {
+    opacity: 0.7;
+}
+
+.post-media-carousel .carousel-control-prev-icon,
+.post-media-carousel .carousel-control-next-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}

@@ -189,15 +189,55 @@ const Home = () => {
 
                                             {post ? (
                                                 <>
-                                                    {post.image_url && (
-                                                        <div style={{ height: '180px', overflow: 'hidden' }}>
-                                                            <img src={post.image_url} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Post" />
+                                                    {/* Media Area */}
+                                                    {post.post_type === 'campaign' ? (
+                                                        <div style={{ height: '448px' }}>
+                                                            {post.media && post.media.length > 0 ? (
+                                                                <Carousel 
+                                                                    className="post-media-carousel shadow-sm h-100" 
+                                                                    interval={3000} 
+                                                                    pause="hover" 
+                                                                    indicators={post.media.length > 1} 
+                                                                    controls={post.media.length > 1}
+                                                                >
+                                                                    {post.media.map((m, idx) => (
+                                                                        <Carousel.Item key={idx} className="h-100">
+                                                                            {m.file_type === 'image' ? (
+                                                                                <img src={m.url} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement Media" />
+                                                                            ) : (
+                                                                                <div className="h-100 bg-black d-flex align-items-center justify-content-center">
+                                                                                    <iframe 
+                                                                                        src={getEmbedUrl(m.url)} 
+                                                                                        title="Announcement Video" 
+                                                                                        style={{ width: '100%', height: '100%', border: 'none' }}
+                                                                                        allowFullScreen
+                                                                                    ></iframe>
+                                                                                </div>
+                                                                            )}
+                                                                        </Carousel.Item>
+                                                                    ))}
+                                                                </Carousel>
+                                                            ) : post.image_url ? (
+                                                                <img src={post.image_url} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement" />
+                                                            ) : null}
                                                         </div>
+                                                    ) : (
+                                                        /* Daily Thought: Standard Layout (One image if any) */
+                                                        post.image_url && (
+                                                            <div style={{ height: '220px', overflow: 'hidden' }}>
+                                                                <img src={post.image_url} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Daily Thought" />
+                                                            </div>
+                                                        )
                                                     )}
-                                                    <Card.Body className="p-4 d-flex flex-column" style={{ height: '380px' }}>
-                                                        <h4 className="h5 fw-bold mb-3">{post.subject}</h4>
-                                                        <div style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '10px' }} className="custom-scrollbar">
-                                                            <p className="text-dark small text-break mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{post.content}</p>
+
+                                                    {/* Text Area */}
+                                                    <Card.Body 
+                                                        className="p-3 d-flex flex-column" 
+                                                        style={{ height: post.post_type === 'campaign' ? '112px' : '340px' }}
+                                                    >
+                                                        <h4 className={`${post.post_type === 'campaign' ? 'h6' : 'h5'} fw-bold mb-2`}>{post.subject}</h4>
+                                                        <div style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '5px' }} className="custom-scrollbar">
+                                                            <p className="text-dark small text-break mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{post.content}</p>
                                                         </div>
                                                     </Card.Body>
                                                 </>

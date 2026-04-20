@@ -87,8 +87,43 @@ def get_posts(db: Session = Depends(get_db)):
 
 @app.post("/posts", response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
-    db_post = models.Post(**post.dict())
+    db_post = models.Post(
+        post_type=post.post_type,
+        subject=post.subject,
+        content=post.content,
+        image_url=post.image_url
+    )
     db.add(db_post)
+    db.commit()
+    db.refresh(db_post)
+
+    for m in post.media:
+        db_media = models.Media(url=m.url, file_type=m.file_type, post_id=db_post.id)
+        db.add(db_media)
+
+    db.commit()
+    db.refresh(db_post)
+    return db_post
+
+
+@app.put("/posts/{post_id}", response_model=schemas.Post)
+def update_post(post_id: int, post_update: schemas.PostCreate, db: Session = Depends(get_db)):
+    db_post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if not db_post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    db_post.subject = post_update.subject
+    db_post.content = post_update.content
+    db_post.post_type = post_update.post_type
+    db_post.image_url = post_update.image_url
+    
+    # Refresh media: Simple approach - delete old and add new
+    db.query(models.Media).filter(models.Media.post_id == post_id).delete()
+    
+    for m in post_update.media:
+        db_media = models.Media(url=m.url, file_type=m.file_type, post_id=db_post.id)
+        db.add(db_media)
+        
     db.commit()
     db.refresh(db_post)
     return db_post
@@ -111,6 +146,55 @@ def create_volunteer(volunteer: schemas.VolunteerCreate, db: Session = Depends(g
     db.refresh(db_volunteer)
     return db_volunteer
 
+
+# LEADERS
+@app.get("/leaders", response_model=List[schemas.Leader])
+def get_leaders(db: Session = Depends(get_db)):
+    return db.query(models.Leader).all()
+
+@app.post("/leaders", response_model=schemas.Leader)
+def create_leader(leader: schemas.LeaderCreate, db: Session = Depends(get_db)):
+    if leader.role in ["MP", "MLA"]:
+        existing = db.query(models.Leader).filter(models.Leader.role == leader.role).first()
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Only one {leader.role} is allowed.")
+
+    db_leader = models.Leader(**leader.dict())
+    db.add(db_leader)
+    db.commit()
+    db.refresh(db_leader)
+    return db_leader
+
+@app.put("/leaders/{leader_id}", response_model=schemas.Leader)
+def update_leader(leader_id: int, leader_update: schemas.LeaderCreate, db: Session = Depends(get_db)):
+    db_leader = db.query(models.Leader).filter(models.Leader.id == leader_id).first()
+    if not db_leader:
+        raise HTTPException(status_code=404, detail="Leader not found")
+    
+    # Check constraint logic if they are changing roles to an MP/MLA
+    if leader_update.role in ["MP", "MLA"] and leader_update.role != db_leader.role:
+        existing = db.query(models.Leader).filter(models.Leader.role == leader_update.role).first()
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Only one {leader_update.role} is allowed.")
+    
+    db_leader.name = leader_update.name
+    db_leader.role = leader_update.role
+    db_leader.ward = leader_update.ward
+    db_leader.image_url = leader_update.image_url
+    
+    db.commit()
+    db.refresh(db_leader)
+    return db_leader
+
+@app.delete("/leaders/{leader_id}")
+def delete_leader(leader_id: int, db: Session = Depends(get_db)):
+    db_leader = db.query(models.Leader).filter(models.Leader.id == leader_id).first()
+    if not db_leader:
+        raise HTTPException(status_code=404, detail="Leader not found")
+    
+    db.delete(db_leader)
+    db.commit()
+    return {"message": "Leader deleted successfully"}
 
 # LOGIN
 @app.post("/login")

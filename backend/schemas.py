@@ -31,11 +31,12 @@ class PostBase(BaseModel):
     image_url: Optional[str] = None
 
 class PostCreate(PostBase):
-    pass
+    media: List[MediaBase] = [] # Allow adding media during creation
 
 class Post(PostBase):
     id: int
     created_at: datetime
+    media: List[Media] = [] # Include media in response
     class Config:
         from_attributes = True
 
@@ -62,3 +63,18 @@ class AdminLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class LeaderBase(BaseModel):
+    name: str
+    role: str
+    ward: Optional[str] = None
+    image_url: Optional[str] = None
+
+class LeaderCreate(LeaderBase):
+    pass
+
+class Leader(LeaderBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True

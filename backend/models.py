@@ -16,9 +16,11 @@ class Media(Base):
     id = Column(Integer, primary_key=True, index=True)
     url = Column(String)
     file_type = Column(String) # 'image' or 'video'
-    activity_id = Column(Integer, ForeignKey("activities.id"))
+    activity_id = Column(Integer, ForeignKey("activities.id"), nullable=True)
+    post_id = Column(Integer, ForeignKey("posts.id"), nullable=True) # New Field: Link media to posts
     
     activity = relationship("Activity", back_populates="media")
+    post = relationship("Post", back_populates="media") # New Relationship
 
 class Post(Base):
     __tablename__ = "posts"
@@ -26,8 +28,10 @@ class Post(Base):
     post_type = Column(String) # 'thought' or 'campaign'
     subject = Column(String)
     content = Column(Text)
-    image_url = Column(String, nullable=True) # New Field: Optional image for thoughts/campaigns
+    image_url = Column(String, nullable=True) # Keep for compatibility
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    media = relationship("Media", back_populates="post", cascade="all, delete-orphan") # New Relationship
 
 class Volunteer(Base):
     __tablename__ = "volunteers"
@@ -44,3 +48,12 @@ class Admin(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True)
     hashed_password = Column(String)
+
+class Leader(Base):
+    __tablename__ = "leaders"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    role = Column(String) # 'MP', 'MLA', 'Councillor'
+    ward = Column(String, nullable=True) # Only for Councillor
+    image_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

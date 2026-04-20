@@ -49,6 +49,19 @@ const t = {
         contactUs: 'Contact Us',
         footerCopy: '© 2024 Nagar Vikas Samiti. All rights reserved.',
         footerMotto: 'Empowering Communities, Developing Cities.',
+
+        // Admin & Leaders
+        manageLeaders: 'Manage Leaders',
+        addLeader: 'Add Leader',
+        editLeader: 'Edit Leader',
+        role: 'Role',
+        ward: 'Ward Number/Name',
+        councillor: 'Councillor',
+        mp: 'MP',
+        mla: 'MLA',
+        saveLeader: 'Save Leader',
+        updateLeader: 'Update Leader',
+        wardRequiredOptions: 'Required for Councillor',
     },
     hi: {
         // Navbar
@@ -100,6 +113,19 @@ const t = {
         contactUs: 'संपर्क करें',
         footerCopy: '© 2024 नगर विकास समिति। सर्वाधिकार सुरक्षित।',
         footerMotto: 'समुदायों को सशक्त बनाना, शहरों का विकास करना।',
+
+        // Admin & Leaders
+        manageLeaders: 'नेताओं का प्रबंधन',
+        addLeader: 'नेता जोड़ें',
+        editLeader: 'नेता संपादित करें',
+        role: 'पद',
+        ward: 'वार्ड नंबर/नाम',
+        councillor: 'पार्षद',
+        mp: 'सांसद (MP)',
+        mla: 'विधायक (MLA)',
+        saveLeader: 'नेता सहेजें',
+        updateLeader: 'नेता अपडेट करें',
+        wardRequiredOptions: 'पार्षद के लिए अनिवार्य',
     }
 };
 
