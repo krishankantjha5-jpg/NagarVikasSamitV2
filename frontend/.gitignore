@@ -26,3 +26,4 @@ dist-ssr
 README.md
 
 *.db
+backend/.env
