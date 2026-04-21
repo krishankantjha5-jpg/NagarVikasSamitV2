@@ -19,10 +19,12 @@ class Media(Base):
     url = Column(String)
     file_type = Column(String) # 'image' or 'video'
     activity_id = Column(Integer, ForeignKey("activities.id"), nullable=True)
-    post_id = Column(Integer, ForeignKey("posts.id"), nullable=True) # New Field: Link media to posts
+    post_id = Column(Integer, ForeignKey("posts.id"), nullable=True) 
+    reality_id = Column(Integer, ForeignKey("realities.id"), nullable=True) # Link to reality checks
     
     activity = relationship("Activity", back_populates="media")
-    post = relationship("Post", back_populates="media") # New Relationship
+    post = relationship("Post", back_populates="media")
+    reality = relationship("Reality", back_populates="media")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -33,9 +35,10 @@ class Post(Base):
     image_url = Column(String, nullable=True) # Keep for compatibility
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
-    media = relationship("Media", back_populates="post", cascade="all, delete-orphan") # New Relationship
+    media = relationship("Media", back_populates="post", cascade="all, delete-orphan")
 
 class Volunteer(Base):
+    # ... (remains same)
     __tablename__ = "volunteers"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
@@ -59,3 +62,31 @@ class Leader(Base):
     ward = Column(String, nullable=True) # Only for Councillor
     image_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    promises = relationship("Promise", back_populates="leader", cascade="all, delete-orphan")
+    realities = relationship("Reality", back_populates="leader", cascade="all, delete-orphan")
+
+class Promise(Base):
+    __tablename__ = "promises"
+    id = Column(Integer, primary_key=True, index=True)
+    leader_id = Column(Integer, ForeignKey("leaders.id"))
+    month = Column(Integer)
+    year = Column(Integer)
+    amount = Column(String)
+    video_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    leader = relationship("Leader", back_populates="promises")
+
+class Reality(Base):
+    __tablename__ = "realities"
+    id = Column(Integer, primary_key=True, index=True)
+    leader_id = Column(Integer, ForeignKey("leaders.id"))
+    month = Column(Integer)
+    year = Column(Integer)
+    area_details = Column(Text)
+    status = Column(String, default="pending") # pending, approved, rejected
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    leader = relationship("Leader", back_populates="realities")
+    media = relationship("Media", back_populates="reality", cascade="all, delete-orphan")

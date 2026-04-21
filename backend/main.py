@@ -9,6 +9,9 @@ import time
 
 from database import engine, get_db
 import models, schemas
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(title="Nagar Vikas Samiti API")
 
@@ -26,8 +29,8 @@ def startup():
         print("DB init failed:", e)
 
 
-# DEBUG (you can remove later)
-print("ACTUAL DB URL:", os.getenv("DATABASE_URL"))
+# ALLOWED PINCODES (can be moved to .env for flexibility)
+ALLOWED_PINCODES = os.getenv("ALLOWED_PINCODES", "121013,121003,201310,210308,110091").split(",")
 
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
@@ -39,7 +42,6 @@ if os.path.exists("./dist"):
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
-print(f"CORS origins loaded: {origins}") # Helps debug Azure logs if frontend fails to connect
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -48,12 +50,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ALLOWED_PINCODES = ["121013", "121003", "201310", "210308", "110091"]
+
+from sqlalchemy.exc import IntegrityError
+from fastapi.responses import JSONResponse
 
 # HEALTH CHECK (important for Azure)
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.exception_handler(IntegrityError)
+async def integrity_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": "Duplicate entry. This title or value might already exist."},
+    )
 
 
 # ACTIVITIES
@@ -222,6 +233,76 @@ def delete_leader(leader_id: int, db: Session = Depends(get_db)):
     db.delete(db_leader)
     db.commit()
     return {"message": "Leader deleted successfully"}
+
+# PROMISES
+@app.post("/promises", response_model=schemas.Promise)
+def create_promise(promise: schemas.PromiseCreate, db: Session = Depends(get_db)):
+    # Verify leader exists
+    db_leader = db.query(models.Leader).filter(models.Leader.id == promise.leader_id).first()
+    if not db_leader:
+        raise HTTPException(status_code=404, detail="Leader not found")
+        
+    db_promise = models.Promise(**promise.dict())
+    db.add(db_promise)
+    db.commit()
+    db.refresh(db_promise)
+    return db_promise
+
+# REALITIES (Public Submission)
+@app.post("/realities", response_model=schemas.Reality)
+def submit_reality(reality: schemas.RealityCreate, db: Session = Depends(get_db)):
+    # Verify leader exists
+    db_leader = db.query(models.Leader).filter(models.Leader.id == reality.leader_id).first()
+    if not db_leader:
+        raise HTTPException(status_code=404, detail="Leader not found")
+    
+    # Create Reality entry
+    db_reality = models.Reality(
+        leader_id=reality.leader_id,
+        month=reality.month,
+        year=reality.year,
+        area_details=reality.area_details,
+        status="pending"
+    )
+    db.add(db_reality)
+    db.commit()
+    db.refresh(db_reality)
+    
+    # Add Media
+    for m in reality.media:
+        db_media = models.Media(
+            url=m.url,
+            file_type=m.file_type,
+            reality_id=db_reality.id
+        )
+        db.add(db_media)
+    
+    db.commit()
+    db.refresh(db_reality)
+    return db_reality
+
+@app.get("/realities/{leader_id}", response_model=List[schemas.Reality])
+def get_approved_realities(leader_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Reality).filter(
+        models.Reality.leader_id == leader_id,
+        models.Reality.status == "approved"
+    ).all()
+
+# ADMIN REALITIES MANAGEMENT
+@app.get("/admin/realities", response_model=List[schemas.Reality])
+def get_pending_realities(db: Session = Depends(get_db)):
+    return db.query(models.Reality).filter(models.Reality.status == "pending").all()
+
+@app.patch("/admin/realities/{reality_id}", response_model=schemas.Reality)
+def update_reality_status(reality_id: int, update: schemas.RealityUpdate, db: Session = Depends(get_db)):
+    db_reality = db.query(models.Reality).filter(models.Reality.id == reality_id).first()
+    if not db_reality:
+        raise HTTPException(status_code=404, detail="Submission not found")
+        
+    db_reality.status = update.status
+    db.commit()
+    db.refresh(db_reality)
+    return db_reality
 
 # LOGIN
 @app.post("/login")

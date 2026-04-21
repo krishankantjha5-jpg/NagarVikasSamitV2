@@ -11,7 +11,28 @@ class Media(MediaBase):
     class Config:
         from_attributes = True
 
+class RealityBase(BaseModel):
+    leader_id: int
+    month: int
+    year: int
+    area_details: str
+
+class RealityCreate(RealityBase):
+    media: List[MediaBase] = []
+
+class RealityUpdate(BaseModel):
+    status: str # approved, rejected
+
+class Reality(RealityBase):
+    id: int
+    status: str
+    created_at: datetime
+    media: List[Media] = []
+    class Config:
+        from_attributes = True
+
 class ActivityBase(BaseModel):
+# ... (rest of the file follows)
     title: str
     description: str
     month: Optional[int] = None
@@ -75,8 +96,26 @@ class LeaderBase(BaseModel):
 class LeaderCreate(LeaderBase):
     pass
 
+class PromiseBase(BaseModel):
+    leader_id: int
+    month: int
+    year: int
+    amount: str
+    video_url: Optional[str] = None
+
+class PromiseCreate(PromiseBase):
+    pass
+
+class Promise(PromiseBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
 class Leader(LeaderBase):
     id: int
     created_at: datetime
+    promises: List[Promise] = []
+    realities: List[Reality] = []
     class Config:
         from_attributes = True
