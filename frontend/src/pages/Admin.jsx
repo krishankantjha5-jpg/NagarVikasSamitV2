@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Nav, Tab, Table, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Nav, Tab, Table, Badge, Modal } from 'react-bootstrap';
 import axios from 'axios';
-import { Edit, Trash2, X } from 'lucide-react';
+import { Edit, Trash2, X, Eye, Check, XCircle } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -17,9 +17,11 @@ const Admin = () => {
     const [posts, setPosts] = useState([]);
     const [volunteers, setVolunteers] = useState([]);
     const [leaders, setLeaders] = useState([]);
+    const [realities, setRealities] = useState([]);
+    const [previewReality, setPreviewReality] = useState(null);
 
     // Form State
-    const [editMode, setEditMode] = useState({ id: null, type: null }); // {id, type: 'work'|'post'|'leader'}
+    const [editMode, setEditMode] = useState({ id: null, type: null }); 
     const [workForm, setWorkForm] = useState({ title: '', description: '', media: [], month: new Date().getMonth() + 1, year: new Date().getFullYear() });
     const [postForm, setPostForm] = useState({ subject: '', content: '', post_type: 'thought', media: [] });
     const [leaderForm, setLeaderForm] = useState({ name: '', role: 'Councillor', ward: '', image_url: '' });
@@ -29,6 +31,8 @@ const Admin = () => {
     const [videoUrls, setVideoUrls] = useState(['']);
     const [postVideoUrls, setPostVideoUrls] = useState(['']); // New: Multiple post video links
     const [formKey, setFormKey] = useState(0); // increment to force-clear file inputs
+    const [promiseForm, setPromiseForm] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '', video_url: '' });
+    const [selectedLeaderId, setSelectedLeaderId] = useState('');
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -38,17 +42,28 @@ const Admin = () => {
 
     const refreshData = async () => {
         try {
-            const [aRes, pRes, vRes, lRes] = await Promise.all([
+            const [aRes, pRes, vRes, lRes, rRes] = await Promise.all([
                 axios.get(`${API_BASE_URL}/activities`),
                 axios.get(`${API_BASE_URL}/posts`),
                 axios.get(`${API_BASE_URL}/volunteers`),
-                axios.get(`${API_BASE_URL}/leaders`)
+                axios.get(`${API_BASE_URL}/leaders`),
+                axios.get(`${API_BASE_URL}/admin/realities`)
             ]);
             setActivities(aRes.data);
             setPosts(pRes.data);
             setVolunteers(vRes.data);
             setLeaders(lRes.data);
+            setRealities(rRes.data);
         } catch (err) { console.error("Refresh failed", err); }
+    };
+
+    const handleRealityStatus = async (id, status) => {
+        try {
+            await axios.patch(`${API_BASE_URL}/admin/realities/${id}`, { status });
+            setSuccessMsg(`Reality ${status}!`);
+            setPreviewReality(null);
+            refreshData();
+        } catch (err) { console.error("Status update failed", err); }
     };
 
     const handleLogin = async (e) => {
@@ -95,7 +110,10 @@ const Admin = () => {
 
             resetForm();
             refreshData();
-        } catch (err) { alert('Operation failed.'); }
+        } catch (err) { 
+            const msg = err.response?.data?.detail || 'Operation failed.';
+            alert(msg); 
+        }
         finally { setLoading(false); }
     };
 
@@ -120,7 +138,13 @@ const Admin = () => {
                 }
             });
 
-            const data = { ...postForm, post_type: type, media: mediaList };
+            let finalImageUrl = postForm.image_url;
+            if (type === 'thought' && postFiles.length > 0) {
+                // For daily thought, we usually have one image and it should go to image_url
+                finalImageUrl = mediaList.find(m => m.file_type === 'image')?.url || finalImageUrl;
+            }
+
+            const data = { ...postForm, post_type: type, media: mediaList, image_url: finalImageUrl };
 
             if (editMode.id) {
                 await axios.put(`${API_BASE_URL}/posts/${editMode.id}`, data);
@@ -132,7 +156,10 @@ const Admin = () => {
 
             resetForm();
             refreshData();
-        } catch (err) { alert('Operation failed.'); }
+        } catch (err) { 
+            const msg = err.response?.data?.detail || 'Operation failed.';
+            alert(msg); 
+        }
         finally { setLoading(false); }
     };
 
@@ -175,6 +202,24 @@ const Admin = () => {
             setSuccessMsg('Leader deleted!');
             refreshData();
         } catch (err) { alert('Delete failed.'); }
+    };
+
+    const handlePromiseSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedLeaderId) return alert('Please select a leader first.');
+        setLoading(true);
+        try {
+            await axios.post(`${API_BASE_URL}/promises`, { 
+                ...promiseForm, 
+                leader_id: parseInt(selectedLeaderId) 
+            });
+            setSuccessMsg('Promise recorded!');
+            setPromiseForm({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '', video_url: '' });
+        } catch (err) { 
+            const msg = err.response?.data?.detail || 'Failed to record promise.';
+            alert(msg); 
+        }
+        finally { setLoading(false); }
     };
 
     const getMediaUrl = (url) => {
@@ -265,6 +310,7 @@ const Admin = () => {
                         <Nav variant="pills" className="flex-column p-3 shadow-lg" style={navStyle}>
                             <Nav.Item className="mb-3"><Nav.Link eventKey="work" className="text-white py-3 fw-bold text-center">Manage Our Work</Nav.Link></Nav.Item>
                             <Nav.Item className="mb-3"><Nav.Link eventKey="leaders" className="text-white py-3 fw-bold text-center">Manage Leaders</Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-3"><Nav.Link eventKey="approvals" className="text-white py-3 fw-bold text-center">Reality Approvals <Badge bg="danger" className="ms-2">{realities.length}</Badge></Nav.Link></Nav.Item>
                             <Nav.Item className="mb-3"><Nav.Link eventKey="thoughts" className="text-white py-3 fw-bold text-center">Announcements</Nav.Link></Nav.Item>
                             <Nav.Item className="mb-3"><Nav.Link eventKey="volunteers" className="text-white py-3 fw-bold text-center">Volunteers</Nav.Link></Nav.Item>
                         </Nav>
@@ -388,9 +434,218 @@ const Admin = () => {
                                         </div>
                                     </Form>
                                 </Card>
+
+                                <div className="mt-5 pt-4 border-top">
+                                    <h2 className="text-center mb-4 fw-bold text-dark">Leader Performance Tracker</h2>
+                                    
+                                    <Card className="p-4 shadow border mb-4 bg-light">
+                                        <Form.Group className="mb-4">
+                                            <Form.Label className="fw-bold fs-5">Select a Leader to Manage Performance</Form.Label>
+                                            <Form.Select 
+                                                style={inputStyle} 
+                                                value={selectedLeaderId} 
+                                                onChange={e => setSelectedLeaderId(e.target.value)}
+                                                className="py-2"
+                                            >
+                                                <option value="">-- Choose a Leader --</option>
+                                                {leaders.map(l => (
+                                                    <option key={l.id} value={l.id}>{l.name} ({l.role})</option>
+                                                ))}
+                                            </Form.Select>
+                                        </Form.Group>
+
+                                        {selectedLeaderId && (
+                                            <Row className="g-4">
+                                                {/* Part 1: Promise Section */}
+                                                <Col md={6}>
+                                                    <Card className="h-100 shadow-sm border-0">
+                                                        <Card.Header className="bg-warning text-dark fw-bold py-3">
+                                                            <span className="fs-5">📋 Promise Slot</span>
+                                                        </Card.Header>
+                                                        <Card.Body>
+                                                            <Form onSubmit={handlePromiseSubmit}>
+                                                                <Row className="mb-3">
+                                                                    <Col sm={6}>
+                                                                        <Form.Group>
+                                                                            <Form.Label className="fw-bold">Year</Form.Label>
+                                                                            <Form.Control 
+                                                                                type="number" 
+                                                                                style={inputStyle} 
+                                                                                value={promiseForm.year} 
+                                                                                onChange={e => setPromiseForm({ ...promiseForm, year: parseInt(e.target.value) })} 
+                                                                            />
+                                                                        </Form.Group>
+                                                                    </Col>
+                                                                    <Col sm={6}>
+                                                                        <Form.Group>
+                                                                            <Form.Label className="fw-bold">Month</Form.Label>
+                                                                            <Form.Select 
+                                                                                style={inputStyle} 
+                                                                                value={promiseForm.month} 
+                                                                                onChange={e => setPromiseForm({ ...promiseForm, month: parseInt(e.target.value) })}
+                                                                            >
+                                                                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, i) => (
+                                                                                    <option key={m} value={i + 1}>{m}</option>
+                                                                                ))}
+                                                                            </Form.Select>
+                                                                        </Form.Group>
+                                                                    </Col>
+                                                                </Row>
+                                                                <Form.Group className="mb-3">
+                                                                    <Form.Label className="fw-bold">Amount</Form.Label>
+                                                                    <Form.Control 
+                                                                        type="text" 
+                                                                        placeholder="e.g. 50 Lakhs" 
+                                                                        required 
+                                                                        style={inputStyle} 
+                                                                        value={promiseForm.amount} 
+                                                                        onChange={e => setPromiseForm({ ...promiseForm, amount: e.target.value })} 
+                                                                    />
+                                                                </Form.Group>
+                                                                <Form.Group className="mb-4">
+                                                                    <Form.Label className="fw-bold">Video URL (Optional)</Form.Label>
+                                                                    <Form.Control 
+                                                                        type="url" 
+                                                                        placeholder="https://youtube.com/..." 
+                                                                        style={inputStyle} 
+                                                                        value={promiseForm.video_url} 
+                                                                        onChange={e => setPromiseForm({ ...promiseForm, video_url: e.target.value })} 
+                                                                    />
+                                                                </Form.Group>
+                                                                <Button variant="dark" type="submit" className="w-100 fw-bold py-2" disabled={loading}>
+                                                                    {loading ? <Spinner size="sm" /> : 'Feed Promise'}
+                                                                </Button>
+                                                            </Form>
+                                                        </Card.Body>
+                                                    </Card>
+                                                </Col>
+
+                                                {/* Part 2: Reality Section */}
+                                                <Col md={6}>
+                                                    <Card className="h-100 shadow-sm border-0 border-start border-4 border-success">
+                                                        <Card.Header className="bg-success text-white fw-bold py-3">
+                                                            <span className="fs-5">✅ Reality Slot</span>
+                                                        </Card.Header>
+                                                        <Card.Body className="d-flex flex-column align-items-center justify-content-center text-muted">
+                                                            <div className="text-center">
+                                                                <div style={{ fontSize: '3rem', opacity: 0.2 }}>🌟</div>
+                                                                <h5 className="mt-3 fw-bold">Reality Tracking</h5>
+                                                                <p className="small">This section will be available soon to track the actual progress of promises.</p>
+                                                            </div>
+                                                        </Card.Body>
+                                                    </Card>
+                                                </Col>
+                                            </Row>
+                                        )}
+                                    </Card>
+                                </div>
                             </Tab.Pane>
 
 
+                            <Tab.Pane eventKey="approvals">
+                                <Card className="p-4 shadow border">
+                                    <h3 className="mb-4 text-indigo fw-bold">Pending Reality Submissions</h3>
+                                    {realities.length === 0 ? (
+                                        <p className="text-center py-5 text-muted">No pending submissions to review.</p>
+                                    ) : (
+                                        <Table responsive hover>
+                                            <thead className="table-dark">
+                                                <tr>
+                                                    <th>Leader</th>
+                                                    <th>Area/Details</th>
+                                                    <th>Timeline</th>
+                                                    <th>Media</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {realities.map(r => {
+                                                    const leader = leaders.find(l => l.id === r.leader_id);
+                                                    return (
+                                                        <tr key={r.id}>
+                                                            <td>{leader ? leader.name : 'Unknown'}</td>
+                                                            <td><div className="text-truncate" style={{maxWidth: '150px'}}>{r.area_details}</div></td>
+                                                            <td>{["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][r.month-1]} {r.year}</td>
+                                                            <td>
+                                                                <Badge bg="secondary" className="px-2">{r.media.length} Items</Badge>
+                                                            </td>
+                                                            <td className="d-flex gap-2">
+                                                                <Button variant="outline-primary" size="sm" onClick={() => setPreviewReality(r)}>
+                                                                    <Eye size={16} className="me-1" /> View & Moderate
+                                                                </Button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </Table>
+                                    )}
+                                </Card>
+
+                                {/* Detailed Preview Modal */}
+                                <Modal show={previewReality !== null} onHide={() => setPreviewReality(null)} size="lg" centered>
+                                    <Modal.Header closeButton className="bg-light">
+                                        <Modal.Title className="fw-bold text-indigo">Reality Check Moderation</Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body className="p-4">
+                                        {previewReality && (
+                                            <Row>
+                                                <Col md={12} className="mb-4">
+                                                    <div className="p-3 bg-light rounded border border-primary border-opacity-25">
+                                                        <div className="row g-3">
+                                                            <div className="col-sm-6">
+                                                                <small className="text-muted d-block text-uppercase fw-bold">Leader</small>
+                                                                <span className="fs-5 fw-bold">{leaders.find(l => l.id === previewReality.leader_id)?.name || 'Unknown'}</span>
+                                                            </div>
+                                                            <div className="col-sm-6">
+                                                                <small className="text-muted d-block text-uppercase fw-bold">Timeline</small>
+                                                                <span className="fs-5 fw-bold">{["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][previewReality.month-1]} {previewReality.year}</span>
+                                                            </div>
+                                                            <div className="col-sm-12 mt-3">
+                                                                <small className="text-muted d-block text-uppercase fw-bold">Area & Details</small>
+                                                                <p className="mb-0 bg-white p-2 rounded border">{previewReality.area_details}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </Col>
+                                                <Col md={12}>
+                                                    <h5 className="fw-bold mb-3 d-flex align-items-center"><Eye size={18} className="me-2 text-primary" /> Submitted Media</h5>
+                                                    <div className="d-flex flex-wrap gap-3 p-3 border rounded bg-white" style={{ minHeight: '200px' }}>
+                                                        {previewReality.media.map((m, idx) => (
+                                                            <div key={idx} className="border rounded shadow-sm overflow-hidden position-relative" style={{ width: '220px' }}>
+                                                                {m.file_type === 'image' ? (
+                                                                    <img src={getMediaUrl(m.url)} className="w-100" style={{ height: '160px', objectFit: 'cover' }} alt="" />
+                                                                ) : (
+                                                                    <div className="bg-dark text-white d-flex flex-column align-items-center justify-content-center w-100" style={{ height: '160px' }}>
+                                                                        <Play size={40} />
+                                                                        <small className="mt-1">Video File</small>
+                                                                    </div>
+                                                                )}
+                                                                <div className="p-2 bg-light text-center">
+                                                                    <a href={getMediaUrl(m.url)} target="_blank" rel="noreferrer" className="btn btn-sm btn-link text-decoration-none p-0">Open Full Size</a>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </Col>
+                                            </Row>
+                                        )}
+                                    </Modal.Body>
+                                    <Modal.Footer className="bg-light p-3">
+                                        <div className="d-flex gap-3 w-100 justify-content-between">
+                                            <Button variant="outline-secondary" onClick={() => setPreviewReality(null)} className="px-4">Close</Button>
+                                            <div className="d-flex gap-2">
+                                                <Button variant="danger" disabled={!previewReality} onClick={() => handleRealityStatus(previewReality.id, 'rejected')} className="px-4 d-flex align-items-center">
+                                                    <XCircle size={18} className="me-2" /> Reject
+                                                </Button>
+                                                <Button variant="success" disabled={!previewReality} onClick={() => handleRealityStatus(previewReality.id, 'approved')} className="px-5 fw-bold d-flex align-items-center">
+                                                    <Check size={18} className="me-2" /> Approve & Publish
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </Modal.Footer>
+                                </Modal>
+                            </Tab.Pane>
                             <Tab.Pane eventKey="thoughts">
                                 <Card className="p-4 shadow border mb-4">
                                     <h3 className="mb-4 text-indigo fw-bold">{editMode.id ? 'Edit Announcement' : 'New Announcement'}</h3>
