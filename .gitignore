@@ -31,4 +31,7 @@ backend/__pycache__
 backend/uploads/
 backend/*.db
 
+
+.env
 *.env
+*.env.*
