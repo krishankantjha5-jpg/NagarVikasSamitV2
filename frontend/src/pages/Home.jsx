@@ -18,6 +18,10 @@ const Home = () => {
     const [verificationLoading, setVerificationLoading] = useState(false);
     const [verificationStatus, setVerificationStatus] = useState({ type: '', message: '' });
     const [isSubmitted, setIsSubmitted] = useState(false);
+    
+    // Filters
+    const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+    const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -42,6 +46,23 @@ const Home = () => {
         window.addEventListener('openVolunteerModal', handler);
         return () => window.removeEventListener('openVolunteerModal', handler);
     }, []);
+
+    useEffect(() => {
+        const filtered = activities.filter(a => a.year === filterYear && a.month === filterMonth);
+        if (filtered.length > 0) {
+            if (!selectedActivity || !filtered.find(f => f.id === selectedActivity.id)) {
+                setSelectedActivity(filtered[0]);
+            }
+        } else {
+            setSelectedActivity(null);
+        }
+    }, [filterYear, filterMonth, activities]);
+
+    const getMediaUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        return `${API_BASE_URL}${url}`;
+    };
 
     const getEmbedUrl = (url) => {
         if (!url) return null;
@@ -100,14 +121,36 @@ const Home = () => {
                 <Card className="premium-card shadow-sm border-0 p-4 mb-4 bg-white">
                     <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                         <h2 className="mb-0 fw-bold border-bottom border-primary border-3 pb-1">{T.ourWork}</h2>
-                        <Form.Select 
-                            style={{width: 'auto', minWidth: '250px'}}
-                            className="shadow-sm border-2 border-dark"
-                            value={selectedActivity?.id || ''}
-                            onChange={(e) => setSelectedActivity(activities.find(a => a.id === parseInt(e.target.value)))}
-                        >
-                            {activities.map(a => <option key={a.id} value={a.id}>{a.title}</option>)}
-                        </Form.Select>
+                        <div className="d-flex gap-2 flex-wrap">
+                            <Form.Select 
+                                style={{ width: '120px' }}
+                                className="shadow-sm border-2 border-dark"
+                                value={filterYear}
+                                onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                            >
+                                {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                            </Form.Select>
+                            <Form.Select 
+                                style={{ width: '150px' }}
+                                className="shadow-sm border-2 border-dark"
+                                value={filterMonth}
+                                onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                            >
+                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, i) => (
+                                    <option key={m} value={i + 1}>{m}</option>
+                                ))}
+                            </Form.Select>
+                            <Form.Select 
+                                style={{width: 'auto', minWidth: '250px'}}
+                                className="shadow-sm border-2 border-dark"
+                                value={selectedActivity?.id || ''}
+                                onChange={(e) => setSelectedActivity(activities.find(a => a.id === parseInt(e.target.value)))}
+                            >
+                                {activities
+                                    .filter(a => (!filterYear || a.year === filterYear) && (!filterMonth || a.month === filterMonth))
+                                    .map(a => <option key={a.id} value={a.id}>{a.title}</option>)}
+                            </Form.Select>
+                        </div>
                     </div>
 
                     {selectedActivity && (
@@ -125,7 +168,7 @@ const Home = () => {
                                         <Carousel className="rounded shadow overflow-hidden" pause="hover" interval={3000}>
                                             {images.map((img, idx) => (
                                                 <Carousel.Item key={idx} style={{ height: '350px' }}>
-                                                    <img src={img.url} className="d-block w-100 h-100" style={{objectFit: 'cover'}} alt="Work" />
+                                                    <img src={getMediaUrl(img.url)} className="d-block w-100 h-100" style={{objectFit: 'cover'}} alt="Work" />
                                                 </Carousel.Item>
                                             ))}
                                         </Carousel>
@@ -203,7 +246,7 @@ const Home = () => {
                                                                     {post.media.map((m, idx) => (
                                                                         <Carousel.Item key={idx} className="h-100">
                                                                             {m.file_type === 'image' ? (
-                                                                                <img src={m.url} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement Media" />
+                                                                                <img src={getMediaUrl(m.url)} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement Media" />
                                                                             ) : (
                                                                                 <div className="h-100 bg-black d-flex align-items-center justify-content-center">
                                                                                     <iframe 
@@ -218,14 +261,14 @@ const Home = () => {
                                                                     ))}
                                                                 </Carousel>
                                                             ) : post.image_url ? (
-                                                                <img src={post.image_url} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement" />
+                                                                <img src={getMediaUrl(post.image_url)} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement" />
                                                             ) : null}
                                                         </div>
                                                     ) : (
                                                         /* Daily Thought: Standard Layout (One image if any) */
                                                         post.image_url && (
                                                             <div style={{ height: '220px', overflow: 'hidden' }}>
-                                                                <img src={post.image_url} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Daily Thought" />
+                                                                <img src={getMediaUrl(post.image_url)} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Daily Thought" />
                                                             </div>
                                                         )
                                                     )}

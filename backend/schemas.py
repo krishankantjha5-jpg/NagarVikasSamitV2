@@ -14,6 +14,8 @@ class Media(MediaBase):
 class ActivityBase(BaseModel):
     title: str
     description: str
+    month: Optional[int] = None
+    year: Optional[int] = None
 
 class ActivityCreate(ActivityBase):
     media: List[MediaBase] = []

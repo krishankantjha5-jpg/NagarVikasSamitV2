@@ -8,6 +8,8 @@ class Activity(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, unique=True, index=True)
     description = Column(Text)
+    month = Column(Integer, nullable=True) # 1-12
+    year = Column(Integer, nullable=True) # e.g. 2024
     
     media = relationship("Media", back_populates="activity", cascade="all, delete-orphan")
 

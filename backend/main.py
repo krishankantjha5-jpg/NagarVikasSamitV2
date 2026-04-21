@@ -2,7 +2,6 @@ from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from azure.storage.blob import BlobServiceClient
 from typing import List
 import os
 import shutil
@@ -17,14 +16,14 @@ app = FastAPI(title="Nagar Vikas Samiti API")
 @app.on_event("startup")
 def startup():
     try:
-        print("🚀 App started successfully")
+        print("App started successfully")
 
         # OPTIONAL: create tables safely (won’t crash app)
         models.Base.metadata.create_all(bind=engine)
-        print("✅ Tables ensured")
+        print("Tables ensured")
 
     except Exception as e:
-        print("❌ DB init failed:", e)
+        print("DB init failed:", e)
 
 
 # DEBUG (you can remove later)
@@ -65,7 +64,12 @@ def get_activities(db: Session = Depends(get_db)):
 
 @app.post("/activities", response_model=schemas.Activity)
 def create_activity(activity: schemas.ActivityCreate, db: Session = Depends(get_db)):
-    db_activity = models.Activity(title=activity.title, description=activity.description)
+    db_activity = models.Activity(
+        title=activity.title, 
+        description=activity.description,
+        month=activity.month,
+        year=activity.year
+    )
     db.add(db_activity)
     db.commit()
     db.refresh(db_activity)
@@ -74,6 +78,29 @@ def create_activity(activity: schemas.ActivityCreate, db: Session = Depends(get_
         db_media = models.Media(url=m.url, file_type=m.file_type, activity_id=db_activity.id)
         db.add(db_media)
 
+    db.commit()
+    db.refresh(db_activity)
+    return db_activity
+
+
+@app.put("/activities/{activity_id}", response_model=schemas.Activity)
+def update_activity(activity_id: int, activity_update: schemas.ActivityCreate, db: Session = Depends(get_db)):
+    db_activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+    if not db_activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
+    db_activity.title = activity_update.title
+    db_activity.description = activity_update.description
+    db_activity.month = activity_update.month
+    db_activity.year = activity_update.year
+    
+    # Refresh media
+    db.query(models.Media).filter(models.Media.activity_id == activity_id).delete()
+    
+    for m in activity_update.media:
+        db_media = models.Media(url=m.url, file_type=m.file_type, activity_id=db_activity.id)
+        db.add(db_media)
+        
     db.commit()
     db.refresh(db_activity)
     return db_activity
@@ -214,6 +241,7 @@ async def upload_image(file: UploadFile = File(...)):
 
     # --- CASE A: AZURE DEPLOYMENT ---
     if connection_string:
+        from azure.storage.blob import BlobServiceClient
         CONTAINER_NAME = "images"
         try:
             blob_service_client = BlobServiceClient.from_connection_string(connection_string)
