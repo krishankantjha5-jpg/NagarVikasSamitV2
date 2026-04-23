@@ -3,7 +3,7 @@ import { Container, Row, Col, Form, Button, Card, Modal, Alert, Carousel, Badge 
 import axios from 'axios';
 import { Bell, Quote, Calendar, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 import { useLang } from '../LanguageContext';
 import { useT } from '../translations';
 
@@ -50,7 +50,12 @@ const Home = () => {
     useEffect(() => {
         const filtered = activities.filter(a => a.year === filterYear && a.month === filterMonth);
         if (filtered.length > 0) {
-            if (!selectedActivity || !filtered.find(f => f.id === selectedActivity.id)) {
+            // Always try to pick the fresh object from the 'activities' array if we have a current selection
+            const freshSelection = selectedActivity ? filtered.find(f => f.id === selectedActivity.id) : null;
+            
+            if (freshSelection) {
+                setSelectedActivity(freshSelection);
+            } else {
                 setSelectedActivity(filtered[0]);
             }
         } else {

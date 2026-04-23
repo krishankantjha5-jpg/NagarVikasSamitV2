@@ -5,7 +5,7 @@ import { useLang } from '../LanguageContext';
 import { useT } from '../translations';
 import { ExternalLink, Play, Eye, Upload, Filter, Calendar } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
 const Leaders = () => {
     const { lang } = useLang();

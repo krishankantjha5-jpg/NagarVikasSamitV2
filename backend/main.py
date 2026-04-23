@@ -1,32 +1,36 @@
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
-from typing import List
 import os
 import shutil
 import time
+import datetime
+from contextlib import asynccontextmanager
+from typing import List
+
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from dotenv import load_dotenv
 
 from database import engine, get_db
 import models, schemas
-from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="Nagar Vikas Samiti API")
-
-# ✅ SAFE STARTUP (won’t crash container)
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ✅ Startup: Create tables safely
     try:
-        print("App started successfully")
-
-        # OPTIONAL: create tables safely (won’t crash app)
         models.Base.metadata.create_all(bind=engine)
-        print("Tables ensured")
-
+        print("Database tables ensured.")
     except Exception as e:
-        print("DB init failed:", e)
+        print(f"DB init failed: {e}")
+    yield
+    # Shutdown logic would go here
+
+app = FastAPI(title="Nagar Vikas Samiti API", lifespan=lifespan)
+
 
 
 # ALLOWED PINCODES (can be moved to .env for flexibility)
@@ -51,13 +55,10 @@ app.add_middleware(
 )
 
 
-from sqlalchemy.exc import IntegrityError
-from fastapi.responses import JSONResponse
-
 # HEALTH CHECK (important for Azure)
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "timestamp": time.time()}
 
 @app.exception_handler(IntegrityError)
 async def integrity_exception_handler(request, exc):
@@ -100,20 +101,28 @@ def update_activity(activity_id: int, activity_update: schemas.ActivityCreate, d
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
     
+    # Update flat fields
     db_activity.title = activity_update.title
     db_activity.description = activity_update.description
     db_activity.month = activity_update.month
     db_activity.year = activity_update.year
     
-    # Refresh media
+    # Refresh media: Delete old, add new
     db.query(models.Media).filter(models.Media.activity_id == activity_id).delete()
     
     for m in activity_update.media:
         db_media = models.Media(url=m.url, file_type=m.file_type, activity_id=db_activity.id)
         db.add(db_media)
         
-    db.commit()
-    db.refresh(db_activity)
+    try:
+        db.commit()
+        db.refresh(db_activity)
+        print(f"Updated activity {activity_id} successfully.")
+    except Exception as e:
+        db.rollback()
+        print(f"Failed to update activity {activity_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database update failed")
+
     return db_activity
 
 
@@ -307,7 +316,11 @@ def update_reality_status(reality_id: int, update: schemas.RealityUpdate, db: Se
 # LOGIN
 @app.post("/login")
 def login(admin: schemas.AdminLogin):
-    if admin.username == "samiti" and admin.password == "2024@samiti":
+    # Use environment variables for production security
+    env_user = os.getenv("ADMIN_USERNAME", "samiti")
+    env_pass = os.getenv("ADMIN_PASSWORD", "2024@samiti")
+
+    if admin.username == env_user and admin.password == env_pass:
         return {"access_token": "fake-jwt-token", "token_type": "bearer"}
 
     raise HTTPException(status_code=401, detail="Invalid credentials")

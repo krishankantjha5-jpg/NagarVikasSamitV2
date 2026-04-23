@@ -8,7 +8,6 @@ import Header from './components/Header';
 import Navigation from './components/Navbar';
 import Home from './pages/Home';
 import Leaders from './pages/Leaders';
-import People from './pages/People';
 import Admin from './pages/Admin';
 
 function AppInner() {
@@ -23,7 +22,6 @@ function AppInner() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/leaders" element={<Leaders />} />
-          <Route path="/people" element={<People />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 import datetime
@@ -90,3 +90,4 @@ class Reality(Base):
     
     leader = relationship("Leader", back_populates="realities")
     media = relationship("Media", back_populates="reality", cascade="all, delete-orphan")
+

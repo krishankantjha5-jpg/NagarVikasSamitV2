@@ -119,3 +119,4 @@ class Leader(LeaderBase):
     realities: List[Reality] = []
     class Config:
         from_attributes = True
+

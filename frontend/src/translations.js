@@ -3,7 +3,6 @@ const t = {
         // Navbar
         home: 'Home',
         ourLeaders: 'Our Leaders',
-        ourPeople: 'Our People',
         joinVolunteer: '🤝 Join as Volunteer',
 
         // Header
@@ -82,12 +81,12 @@ const t = {
         filterBy: 'Filter By',
         leaderType: 'Leader Type',
         months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+
     },
     hi: {
         // Navbar
         home: 'होम',
         ourLeaders: 'हमारे नेता',
-        ourPeople: 'हमारे लोग',
         joinVolunteer: '🤝 स्वयंसेवक बनें',
 
         // Header
@@ -166,6 +165,7 @@ const t = {
         filterBy: 'द्वारा फ़िल्टर करें',
         leaderType: 'नेता का प्रकार',
         months: ["जनवरी", "फरवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"],
+
     }
 };
 

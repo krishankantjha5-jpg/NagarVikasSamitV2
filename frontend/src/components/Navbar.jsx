@@ -43,7 +43,6 @@ const Navigation = () => {
     const navLinks = [
         { to: '/', label: T.home, end: true },
         { to: '/leaders', label: T.ourLeaders },
-        { to: '/people', label: T.ourPeople },
     ];
 
     return (

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Nav, Tab, Table, Badge, Modal } from 'react-bootstrap';
 import axios from 'axios';
-import { Edit, Trash2, X, Eye, Check, XCircle } from 'lucide-react';
+import { Edit, Trash2, X, Eye, Check, XCircle, Play } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
 const Admin = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -47,7 +47,7 @@ const Admin = () => {
                 axios.get(`${API_BASE_URL}/posts`),
                 axios.get(`${API_BASE_URL}/volunteers`),
                 axios.get(`${API_BASE_URL}/leaders`),
-                axios.get(`${API_BASE_URL}/admin/realities`)
+                axios.get(`${API_BASE_URL}/admin/realities`),
             ]);
             setActivities(aRes.data);
             setPosts(pRes.data);
@@ -65,6 +65,7 @@ const Admin = () => {
             refreshData();
         } catch (err) { console.error("Status update failed", err); }
     };
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -746,6 +747,7 @@ const Admin = () => {
                     </Col>
                 </Row>
             </Tab.Container>
+
         </Container>
     );
 };
