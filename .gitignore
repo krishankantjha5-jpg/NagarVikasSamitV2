@@ -35,3 +35,7 @@ backend/*.db
 .env
 *.env
 *.env.*
+
+__pycache__/    
+
+
