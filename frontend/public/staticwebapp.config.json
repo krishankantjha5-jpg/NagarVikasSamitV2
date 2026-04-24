@@ -1,5 +1,14 @@
 {
+  "routes": [],
   "navigationFallback": {
-    "rewrite": "/index.html"
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/*.css",
+      "/*.js",
+      "/*.png",
+      "/*.jpg",
+      "/*.svg"
+    ]
   }
 }
