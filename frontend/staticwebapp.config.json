@@ -1,0 +1,14 @@
+{
+  "routes": [],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/*.css",
+      "/*.js",
+      "/*.png",
+      "/*.jpg",
+      "/*.svg"
+    ]
+  }
+}
