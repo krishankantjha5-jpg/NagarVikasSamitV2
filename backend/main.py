@@ -61,7 +61,7 @@ if os.path.exists("./dist"):
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -73,8 +73,13 @@ app.add_middleware(
 
 # HEALTH CHECK (important for Azure)
 @app.get("/health")
-def health():
-    return {"status": "ok", "timestamp": time.time()}
+async def health_check():
+    import time
+    return {
+        "status": "healthy",
+        "allowed_origins": origins,
+        "timestamp": time.time()
+    }
 
 @app.exception_handler(IntegrityError)
 async def integrity_exception_handler(request, exc):
