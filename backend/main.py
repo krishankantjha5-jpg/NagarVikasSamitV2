@@ -81,6 +81,13 @@ async def health_check():
         "timestamp": time.time()
     }
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "type": str(type(exc))},
+    )
+
 @app.exception_handler(IntegrityError)
 async def integrity_exception_handler(request, exc):
     return JSONResponse(
