@@ -54,7 +54,7 @@ ALLOWED_PINCODES = os.getenv("ALLOWED_PINCODES", "121013,121003,201310,210308,11
 
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 if os.path.exists("./dist"):
     app.mount("/", StaticFiles(directory="./dist", html=True), name="static")
