@@ -6,7 +6,7 @@ const t = {
         joinVolunteer: 'Join as Volunteer',
 
         // Header
-        orgName: 'Nagar Vikas Samiti',
+        orgName: 'नगर विकास समिति',
 
         // Home — Our Work
         ourWork: 'Our Work',
@@ -46,7 +46,7 @@ const t = {
         footerTagline: 'Empowering communities and building a better city together — one neighbourhood at a time.',
         followUs: 'Follow Us',
         contactUs: 'Contact Us',
-        footerCopy: '© 2024 Nagar Vikas Samiti. All rights reserved.',
+        footerCopy: '© 2024 नगर विकास समिति। सर्वाधिकार सुरक्षित।',
         footerMotto: 'Empowering Communities, Developing Cities.',
 
         // Admin & Leaders

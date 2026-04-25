@@ -404,7 +404,7 @@ const Leaders = () => {
                 </div>
             )}
 
-            <div className="text-center text-muted small py-4 bg-white border-top">Nagar Vikas Samiti Performance Tracking System</div>
+            <div className="text-center text-muted small py-4 bg-white border-top">नगर विकास समिति प्रदर्शन ट्रैकिंग सिस्टम</div>
         </Container>
     );
 };

@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown logic would go here
 
-app = FastAPI(title="Nagar Vikas Samiti API", lifespan=lifespan)
+app = FastAPI(title="नगर विकास समिति API", lifespan=lifespan)
 
 
 
