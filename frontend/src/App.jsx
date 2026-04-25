@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Container } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import { LanguageProvider, useLang } from './LanguageContext';
@@ -9,6 +10,9 @@ import Navigation from './components/Navbar';
 import Home from './pages/Home';
 import Leaders from './pages/Leaders';
 import Admin from './pages/Admin';
+import OurPeople from './pages/OurPeople';
+import UserDashboard from './pages/UserDashboard';
+import EncourageUs from './pages/EncourageUs';
 
 function AppInner() {
   const { lang } = useLang();
@@ -22,6 +26,9 @@ function AppInner() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/leaders" element={<Leaders />} />
+          <Route path="/our-people" element={<OurPeople />} />
+          <Route path="/encourage-us" element={<EncourageUs />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
@@ -29,7 +36,7 @@ function AppInner() {
         <Container>
           <div style={{ padding: '2.5rem 0 1.5rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ flex: '1 1 220px' }}>
-              <h5 style={{ fontWeight: 700, fontSize: '1.2rem', marginBottom: '0.5rem', color: '#fff' }}>🏛️ {T.orgName}</h5>
+              <h5 style={{ fontWeight: 700, fontSize: '1.2rem', marginBottom: '0.5rem', color: '#fff' }}>{T.orgName}</h5>
               <p style={{ color: '#adb5bd', fontSize: '0.88rem', lineHeight: '1.6', marginBottom: 0 }}>{T.footerTagline}</p>
             </div>
             <div style={{ flex: '1 1 200px' }}>
@@ -57,12 +64,10 @@ function AppInner() {
               <h6 style={{ fontWeight: 700, color: '#e9ecef', marginBottom: '1rem', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.8rem' }}>{T.contactUs}</h6>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 <a href="tel:9217017090" style={{ color: '#55efc4', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#55efc4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12a19.79 19.79 0 0 1-3-8.59 2 2 0 0 1 1.98-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                  +91 92170 17090
+                  Call: +91 92170 17090
                 </a>
                 <a href="mailto:nagarvikassamiti32@gmail.com" style={{ color: '#fdcb6e', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fdcb6e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  nagarvikassamiti32@gmail.com
+                  Email: nagarvikassamiti32@gmail.com
                 </a>
               </div>
             </div>
@@ -86,6 +91,5 @@ function App() {
     </LanguageProvider>
   );
 }
-const Container = ({ children }) => <div className="container">{children}</div>;
 
 export default App;

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Nav, Tab, Table, Badge, Modal } from 'react-bootstrap';
 import axios from 'axios';
-import { Edit, Trash2, X, Eye, Check, XCircle, Play } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
@@ -18,7 +17,10 @@ const Admin = () => {
     const [volunteers, setVolunteers] = useState([]);
     const [leaders, setLeaders] = useState([]);
     const [realities, setRealities] = useState([]);
+    const [helpEntries, setHelpEntries] = useState([]);
     const [previewReality, setPreviewReality] = useState(null);
+    const [previewHelpEntry, setPreviewHelpEntry] = useState(null);
+    const [adminComment, setAdminComment] = useState('');
 
     // Form State
     const [editMode, setEditMode] = useState({ id: null, type: null }); 
@@ -26,12 +28,13 @@ const Admin = () => {
     const [postForm, setPostForm] = useState({ subject: '', content: '', post_type: 'thought', media: [] });
     const [leaderForm, setLeaderForm] = useState({ name: '', role: 'Councillor', ward: '', image_url: '' });
     const [workFiles, setWorkFiles] = useState([]);
-    const [postFiles, setPostFiles] = useState([]); // New: Multiple post images
+    const [postFiles, setPostFiles] = useState([]);
     const [leaderFiles, setLeaderFiles] = useState([]);
     const [videoUrls, setVideoUrls] = useState(['']);
-    const [postVideoUrls, setPostVideoUrls] = useState(['']); // New: Multiple post video links
+    const [postVideoUrls, setPostVideoUrls] = useState(['']);
     const [formKey, setFormKey] = useState(0); // increment to force-clear file inputs
-    const [promiseForm, setPromiseForm] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '', video_url: '' });
+    const [promiseForm, setPromiseForm] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '' });
+    const [donationGoal, setDonationGoal] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), target_amount: '', add_collection: '' });
     const [selectedLeaderId, setSelectedLeaderId] = useState('');
 
     useEffect(() => {
@@ -42,18 +45,20 @@ const Admin = () => {
 
     const refreshData = async () => {
         try {
-            const [aRes, pRes, vRes, lRes, rRes] = await Promise.all([
+            const [aRes, pRes, vRes, lRes, rRes, hRes] = await Promise.all([
                 axios.get(`${API_BASE_URL}/activities`),
                 axios.get(`${API_BASE_URL}/posts`),
                 axios.get(`${API_BASE_URL}/volunteers`),
                 axios.get(`${API_BASE_URL}/leaders`),
-                axios.get(`${API_BASE_URL}/admin/realities`),
+                axios.get(`${API_BASE_URL}/admin/realities?status=all`),
+                axios.get(`${API_BASE_URL}/admin/help-entries`),
             ]);
             setActivities(aRes.data);
             setPosts(pRes.data);
             setVolunteers(vRes.data);
             setLeaders(lRes.data);
             setRealities(rRes.data);
+            setHelpEntries(hRes.data);
         } catch (err) { console.error("Refresh failed", err); }
     };
 
@@ -64,6 +69,32 @@ const Admin = () => {
             setPreviewReality(null);
             refreshData();
         } catch (err) { console.error("Status update failed", err); }
+    };
+
+    const handleDeleteReality = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this reality record?')) return;
+        try {
+            await axios.delete(`${API_BASE_URL}/admin/realities/${id}`);
+            setSuccessMsg('Reality record deleted!');
+            refreshData();
+        } catch (err) { console.error("Delete failed", err); }
+    };
+
+    const handleHelpStatus = async (id, status, comment) => {
+        if (!comment || comment.trim() === '') {
+            alert('A comment is required to approve or reject an entry.');
+            return;
+        }
+        try {
+            await axios.patch(`${API_BASE_URL}/admin/help-entries/${id}`, { status, comment });
+            setSuccessMsg(`Help entry ${status}!`);
+            setPreviewHelpEntry(null);
+            setAdminComment('');
+            refreshData();
+        } catch (err) { 
+            console.error("Status update failed", err);
+            alert(err.response?.data?.detail || 'Failed to update status');
+        }
     };
 
 
@@ -92,7 +123,6 @@ const Admin = () => {
                 mediaList.push({ url: res.data.image_url, file_type: 'image' });
             }
 
-            // Process video URLs
             videoUrls.filter(v => v.trim() !== '').forEach(v => {
                 if (!mediaList.find(m => m.url === v)) {
                     mediaList.push({ url: v, file_type: 'video' });
@@ -132,16 +162,15 @@ const Admin = () => {
                 mediaList.push({ url: res.data.image_url, file_type: 'image' });
             }
 
-            // Process video URLs
             postVideoUrls.filter(v => v.trim() !== '').forEach(v => {
                 if (!mediaList.find(m => m.url === v)) {
                     mediaList.push({ url: v, file_type: 'video' });
                 }
             });
 
+
             let finalImageUrl = postForm.image_url;
             if (type === 'thought' && postFiles.length > 0) {
-                // For daily thought, we usually have one image and it should go to image_url
                 finalImageUrl = mediaList.find(m => m.file_type === 'image')?.url || finalImageUrl;
             }
 
@@ -196,15 +225,6 @@ const Admin = () => {
         finally { setLoading(false); }
     };
 
-    const deleteLeader = async (id) => {
-        if (!window.confirm('Delete this leader?')) return;
-        try {
-            await axios.delete(`${API_BASE_URL}/leaders/${id}`);
-            setSuccessMsg('Leader deleted!');
-            refreshData();
-        } catch (err) { alert('Delete failed.'); }
-    };
-
     const handlePromiseSubmit = async (e) => {
         e.preventDefault();
         if (!selectedLeaderId) return alert('Please select a leader first.');
@@ -215,12 +235,31 @@ const Admin = () => {
                 leader_id: parseInt(selectedLeaderId) 
             });
             setSuccessMsg('Promise recorded!');
-            setPromiseForm({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '', video_url: '' });
+            setPromiseForm({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '' });
         } catch (err) { 
             const msg = err.response?.data?.detail || 'Failed to record promise.';
             alert(msg); 
         }
         finally { setLoading(false); }
+    };
+
+    const handleDonationSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await axios.post(`${API_BASE_URL}/admin/donation-goal`, {
+                month: parseInt(donationGoal.month),
+                year: parseInt(donationGoal.year),
+                target_amount: donationGoal.target_amount ? parseFloat(donationGoal.target_amount) : null,
+                add_collection: donationGoal.add_collection ? parseFloat(donationGoal.add_collection) : null
+            });
+            setSuccessMsg('Donation goal/collection updated successfully!');
+            setDonationGoal({ ...donationGoal, target_amount: '', add_collection: '' });
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Failed to update donation goal.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getMediaUrl = (url) => {
@@ -239,12 +278,8 @@ const Admin = () => {
     };
 
     const removeFromPostMedia = (index) => {
-        const item = postForm.media[index];
         const newMedia = (postForm.media || []).filter((_, i) => i !== index);
         setPostForm({ ...postForm, media: newMedia });
-        if (item.file_type === 'video') {
-            setPostVideoUrls(newMedia.filter(m => m.file_type === 'video').map(m => m.url));
-        }
     };
 
 
@@ -258,12 +293,10 @@ const Admin = () => {
                 month: item.month || new Date().getMonth() + 1,
                 year: item.year || new Date().getFullYear()
             });
-            setVideoUrls(item.media.filter(m => m.file_type === 'video').map(m => m.url));
         } else if (type === 'leader') {
             setLeaderForm({ name: item.name, role: item.role, ward: item.ward || '', image_url: item.image_url || '' });
         } else {
             setPostForm({ subject: item.subject, content: item.content, post_type: item.post_type, image_url: item.image_url, media: item.media });
-            setPostVideoUrls(item.media.filter(m => m.file_type === 'video').map(m => m.url));
         }
     };
 
@@ -277,7 +310,7 @@ const Admin = () => {
         setLeaderFiles([]);
         setPostVideoUrls(['']);
         setVideoUrls(['']);
-        setFormKey(k => k + 1); // re-mount forms to clear file inputs
+        setFormKey(k => k + 1);
         setTimeout(() => setSuccessMsg(''), 3000);
     };
 
@@ -313,7 +346,9 @@ const Admin = () => {
                             <Nav.Item className="mb-3"><Nav.Link eventKey="leaders" className="text-white py-3 fw-bold text-center">Manage Leaders</Nav.Link></Nav.Item>
                             <Nav.Item className="mb-3"><Nav.Link eventKey="approvals" className="text-white py-3 fw-bold text-center">Reality Approvals <Badge bg="danger" className="ms-2">{realities.length}</Badge></Nav.Link></Nav.Item>
                             <Nav.Item className="mb-3"><Nav.Link eventKey="thoughts" className="text-white py-3 fw-bold text-center">Announcements</Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-3"><Nav.Link eventKey="help" className="text-white py-3 fw-bold text-center">Community Help <Badge bg="danger" className="ms-2">{helpEntries.length}</Badge></Nav.Link></Nav.Item>
                             <Nav.Item className="mb-3"><Nav.Link eventKey="volunteers" className="text-white py-3 fw-bold text-center">Volunteers</Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-3"><Nav.Link eventKey="donations" className="text-white py-3 fw-bold text-center">Manage Donations</Nav.Link></Nav.Item>
                         </Nav>
                         <Button variant="outline-danger" className="w-100 mt-4 fw-bold" onClick={() => setIsLoggedIn(false)}>Logout</Button>
                     </Col>
@@ -342,19 +377,14 @@ const Admin = () => {
                                         </Row>
                                         <Form.Group className="mb-3"><Form.Label className="fw-bold">Description</Form.Label><Form.Control as="textarea" rows={2} required style={inputStyle} value={workForm.description} onChange={e => setWorkForm({ ...workForm, description: e.target.value })} /></Form.Group>
                                         
-                                        {/* Activity Media Manager */}
                                         {workForm.media.length > 0 && (
                                             <div className="mb-4">
-                                                <Form.Label className="fw-bold text-secondary mb-2">Attached Media (Click X to remove)</Form.Label>
+                                                <Form.Label className="fw-bold text-secondary mb-2">Attached Media</Form.Label>
                                                 <div className="d-flex flex-wrap gap-3 p-3 border rounded bg-light">
                                                     {workForm.media.map((m, idx) => (
                                                         <div key={idx} className="position-relative" style={{ width: '100px', height: '100px' }}>
-                                                            {m.file_type === 'image' ? (
+                                                            {m.file_type === 'image' && (
                                                                 <img src={getMediaUrl(m.url)} alt="" className="w-100 h-100 rounded border" style={{ objectFit: 'cover' }} />
-                                                            ) : (
-                                                                <div className="w-100 h-100 rounded border bg-dark text-white d-flex align-items-center justify-content-center text-center p-1" style={{ fontSize: '10px', overflow: 'hidden' }}>
-                                                                    Video Link
-                                                                </div>
                                                             )}
                                                             <Button 
                                                                 variant="danger" 
@@ -363,7 +393,7 @@ const Admin = () => {
                                                                 style={{ top: '-8px', right: '-8px', width: '22px', height: '22px' }}
                                                                 onClick={() => removeFromWorkMedia(idx)}
                                                             >
-                                                                <X size={14} />
+                                                                Close
                                                             </Button>
                                                         </div>
                                                     ))}
@@ -371,8 +401,14 @@ const Admin = () => {
                                             </div>
                                         )}
 
-                                        <Form.Group className="mb-3"><Form.Label className="fw-bold">Photos (Upload new)</Form.Label><Form.Control type="file" multiple accept="image/*" style={inputStyle} onChange={e => setWorkFiles(Array.from(e.target.files))} /></Form.Group>
-                                        <Form.Group className="mb-4"><Form.Label className="fw-bold">YouTube Links (One per line)</Form.Label><Form.Control as="textarea" rows={2} style={inputStyle} value={videoUrls.join('\n')} onChange={e => setVideoUrls(e.target.value.split('\n'))} /></Form.Group>
+                                        <Form.Group className="mb-4">
+                                            <Form.Label className="fw-bold">Upload Photos</Form.Label>
+                                            <Form.Control type="file" multiple accept="image/*" style={inputStyle} onChange={e => setWorkFiles(Array.from(e.target.files))} />
+                                        </Form.Group>
+                                        <Form.Group className="mb-4">
+                                            <Form.Label className="fw-bold">Video URLs (YouTube links, one per line)</Form.Label>
+                                            <Form.Control as="textarea" rows={2} style={inputStyle} value={videoUrls.join('\n')} onChange={e => setVideoUrls(e.target.value.split('\n'))} />
+                                        </Form.Group>
                                         <div className="d-flex gap-2">
                                             <Button variant={editMode.type === 'work' ? 'warning' : 'success'} type="submit" disabled={loading} className="px-5 fw-bold">{loading ? <Spinner size="sm" /> : (editMode.type === 'work' ? 'Update Activity' : 'Save Activity')}</Button>
                                             {editMode.id && <Button variant="secondary" onClick={resetForm}>Cancel Edit</Button>}
@@ -391,7 +427,7 @@ const Admin = () => {
                                                 <tr key={a.id}>
                                                     <td>{a.title}</td>
                                                     <td>
-                                                        <Button variant="outline-primary" size="sm" onClick={() => startEdit('work', a)}><Edit size={16} /></Button>
+                                                        <Button variant="outline-primary" size="sm" onClick={() => startEdit('work', a)}>Edit</Button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -457,11 +493,10 @@ const Admin = () => {
 
                                         {selectedLeaderId && (
                                             <Row className="g-4">
-                                                {/* Part 1: Promise Section */}
                                                 <Col md={6}>
                                                     <Card className="h-100 shadow-sm border-0">
                                                         <Card.Header className="bg-warning text-dark fw-bold py-3">
-                                                            <span className="fs-5">📋 Promise Slot</span>
+                                                            <span className="fs-5">Promise Slot</span>
                                                         </Card.Header>
                                                         <Card.Body>
                                                             <Form onSubmit={handlePromiseSubmit}>
@@ -503,16 +538,6 @@ const Admin = () => {
                                                                         onChange={e => setPromiseForm({ ...promiseForm, amount: e.target.value })} 
                                                                     />
                                                                 </Form.Group>
-                                                                <Form.Group className="mb-4">
-                                                                    <Form.Label className="fw-bold">Video URL (Optional)</Form.Label>
-                                                                    <Form.Control 
-                                                                        type="url" 
-                                                                        placeholder="https://youtube.com/..." 
-                                                                        style={inputStyle} 
-                                                                        value={promiseForm.video_url} 
-                                                                        onChange={e => setPromiseForm({ ...promiseForm, video_url: e.target.value })} 
-                                                                    />
-                                                                </Form.Group>
                                                                 <Button variant="dark" type="submit" className="w-100 fw-bold py-2" disabled={loading}>
                                                                     {loading ? <Spinner size="sm" /> : 'Feed Promise'}
                                                                 </Button>
@@ -521,15 +546,13 @@ const Admin = () => {
                                                     </Card>
                                                 </Col>
 
-                                                {/* Part 2: Reality Section */}
                                                 <Col md={6}>
                                                     <Card className="h-100 shadow-sm border-0 border-start border-4 border-success">
                                                         <Card.Header className="bg-success text-white fw-bold py-3">
-                                                            <span className="fs-5">✅ Reality Slot</span>
+                                                            <span className="fs-5">Reality Slot</span>
                                                         </Card.Header>
                                                         <Card.Body className="d-flex flex-column align-items-center justify-content-center text-muted">
                                                             <div className="text-center">
-                                                                <div style={{ fontSize: '3rem', opacity: 0.2 }}>🌟</div>
                                                                 <h5 className="mt-3 fw-bold">Reality Tracking</h5>
                                                                 <p className="small">This section will be available soon to track the actual progress of promises.</p>
                                                             </div>
@@ -544,9 +567,9 @@ const Admin = () => {
 
 
                             <Tab.Pane eventKey="approvals">
-                                <Card className="p-4 shadow border">
+                                 <Card className="p-4 shadow border mb-4">
                                     <h3 className="mb-4 text-indigo fw-bold">Pending Reality Submissions</h3>
-                                    {realities.length === 0 ? (
+                                    {realities.filter(r => r.status === 'pending').length === 0 ? (
                                         <p className="text-center py-5 text-muted">No pending submissions to review.</p>
                                     ) : (
                                         <Table responsive hover>
@@ -560,7 +583,7 @@ const Admin = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {realities.map(r => {
+                                                {realities.filter(r => r.status === 'pending').map(r => {
                                                     const leader = leaders.find(l => l.id === r.leader_id);
                                                     return (
                                                         <tr key={r.id}>
@@ -572,7 +595,7 @@ const Admin = () => {
                                                             </td>
                                                             <td className="d-flex gap-2">
                                                                 <Button variant="outline-primary" size="sm" onClick={() => setPreviewReality(r)}>
-                                                                    <Eye size={16} className="me-1" /> View & Moderate
+                                                                    View & Moderate
                                                                 </Button>
                                                             </td>
                                                         </tr>
@@ -583,7 +606,42 @@ const Admin = () => {
                                     )}
                                 </Card>
 
-                                {/* Detailed Preview Modal */}
+                                <Card className="p-4 shadow border">
+                                    <h3 className="mb-4 text-success fw-bold">Approved Realities (Live)</h3>
+                                    {realities.filter(r => r.status === 'approved').length === 0 ? (
+                                        <p className="text-center py-5 text-muted">No approved realities yet.</p>
+                                    ) : (
+                                        <Table responsive hover>
+                                            <thead className="table-success">
+                                                <tr>
+                                                    <th>Leader</th>
+                                                    <th>Area/Details</th>
+                                                    <th>Timeline</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {realities.filter(r => r.status === 'approved').map(r => {
+                                                    const leader = leaders.find(l => l.id === r.leader_id);
+                                                    return (
+                                                        <tr key={r.id}>
+                                                            <td>{leader ? leader.name : 'Unknown'}</td>
+                                                            <td><div className="text-truncate" style={{maxWidth: '200px'}}>{r.area_details}</div></td>
+                                                            <td>{["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][r.month-1]} {r.year}</td>
+                                                            <td>
+                                                                <div className="d-flex gap-2">
+                                                                    <Button variant="info" size="sm" onClick={() => setPreviewReality(r)}>View</Button>
+                                                                    <Button variant="danger" size="sm" onClick={() => handleDeleteReality(r.id)}>Delete</Button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </Table>
+                                    )}
+                                </Card>
+
                                 <Modal show={previewReality !== null} onHide={() => setPreviewReality(null)} size="lg" centered>
                                     <Modal.Header closeButton className="bg-light">
                                         <Modal.Title className="fw-bold text-indigo">Reality Check Moderation</Modal.Title>
@@ -610,20 +668,21 @@ const Admin = () => {
                                                     </div>
                                                 </Col>
                                                 <Col md={12}>
-                                                    <h5 className="fw-bold mb-3 d-flex align-items-center"><Eye size={18} className="me-2 text-primary" /> Submitted Media</h5>
+                                                    <h5 className="fw-bold mb-3 d-flex align-items-center">Submitted Media</h5>
                                                     <div className="d-flex flex-wrap gap-3 p-3 border rounded bg-white" style={{ minHeight: '200px' }}>
                                                         {previewReality.media.map((m, idx) => (
                                                             <div key={idx} className="border rounded shadow-sm overflow-hidden position-relative" style={{ width: '220px' }}>
                                                                 {m.file_type === 'image' ? (
                                                                     <img src={getMediaUrl(m.url)} className="w-100" style={{ height: '160px', objectFit: 'cover' }} alt="" />
                                                                 ) : (
-                                                                    <div className="bg-dark text-white d-flex flex-column align-items-center justify-content-center w-100" style={{ height: '160px' }}>
-                                                                        <Play size={40} />
-                                                                        <small className="mt-1">Video File</small>
+                                                                    <div className="bg-dark text-white d-flex align-items-center justify-content-center w-100" style={{ height: '160px' }}>
+                                                                        <small>Video Link</small>
                                                                     </div>
                                                                 )}
                                                                 <div className="p-2 bg-light text-center">
-                                                                    <a href={getMediaUrl(m.url)} target="_blank" rel="noreferrer" className="btn btn-sm btn-link text-decoration-none p-0">Open Full Size</a>
+                                                                    <a href={getMediaUrl(m.url)} target="_blank" rel="noreferrer" className="btn btn-sm btn-link text-decoration-none p-0 w-100 text-truncate">
+                                                                        {m.file_type === 'image' ? 'Open Full Photo' : 'Open Video Link'}
+                                                                    </a>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -637,10 +696,10 @@ const Admin = () => {
                                             <Button variant="outline-secondary" onClick={() => setPreviewReality(null)} className="px-4">Close</Button>
                                             <div className="d-flex gap-2">
                                                 <Button variant="danger" disabled={!previewReality} onClick={() => handleRealityStatus(previewReality.id, 'rejected')} className="px-4 d-flex align-items-center">
-                                                    <XCircle size={18} className="me-2" /> Reject
+                                                    Reject
                                                 </Button>
                                                 <Button variant="success" disabled={!previewReality} onClick={() => handleRealityStatus(previewReality.id, 'approved')} className="px-5 fw-bold d-flex align-items-center">
-                                                    <Check size={18} className="me-2" /> Approve & Publish
+                                                    {previewReality?.status === 'approved' ? 'Close' : 'Approve & Publish'}
                                                 </Button>
                                             </div>
                                         </div>
@@ -655,19 +714,14 @@ const Admin = () => {
                                         <Form.Group className="mb-3"><Form.Label className="fw-bold">Subject</Form.Label><Form.Control type="text" required style={inputStyle} value={postForm.subject} onChange={e => setPostForm({ ...postForm, subject: e.target.value })} /></Form.Group>
                                         <Form.Group className="mb-3"><Form.Label className="fw-bold">Content</Form.Label><Form.Control as="textarea" rows={3} required style={inputStyle} value={postForm.content} onChange={e => setPostForm({ ...postForm, content: e.target.value })} /></Form.Group>
                                         
-                                        {/* Announcement Media Manager */}
                                         {postForm.media && postForm.media.length > 0 && (
                                             <div className="mb-4">
-                                                <Form.Label className="fw-bold text-secondary mb-2">Attached Media (Click X to remove)</Form.Label>
+                                                <Form.Label className="fw-bold text-secondary mb-2">Attached Media</Form.Label>
                                                 <div className="d-flex flex-wrap gap-3 p-3 border rounded bg-light">
                                                     {postForm.media.map((m, idx) => (
                                                         <div key={idx} className="position-relative" style={{ width: '80px', height: '80px' }}>
-                                                            {m.file_type === 'image' ? (
+                                                            {m.file_type === 'image' && (
                                                                 <img src={getMediaUrl(m.url)} alt="" className="w-100 h-100 rounded border" style={{ objectFit: 'cover' }} />
-                                                            ) : (
-                                                                <div className="w-100 h-100 rounded border bg-dark text-white d-flex align-items-center justify-content-center text-center p-1" style={{ fontSize: '9px', overflow: 'hidden' }}>
-                                                                    Video
-                                                                </div>
                                                             )}
                                                             <Button 
                                                                 variant="danger" 
@@ -676,7 +730,7 @@ const Admin = () => {
                                                                 style={{ top: '-6px', right: '-6px', width: '20px', height: '20px' }}
                                                                 onClick={() => removeFromPostMedia(idx)}
                                                             >
-                                                                <X size={12} />
+                                                                Close
                                                             </Button>
                                                         </div>
                                                     ))}
@@ -711,7 +765,7 @@ const Admin = () => {
                                                     <td>{p.subject}</td>
                                                     <td className="text-capitalize">{p.post_type}</td>
                                                     <td>
-                                                        <Button variant="outline-primary" size="sm" onClick={() => startEdit(p.post_type, p)}><Edit size={16} /></Button>
+                                                        <Button variant="outline-primary" size="sm" onClick={() => startEdit(p.post_type, p)}>Edit</Button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -743,10 +797,133 @@ const Admin = () => {
                                     </Table>
                                 </Card>
                             </Tab.Pane>
+                            <Tab.Pane eventKey="help">
+                                <Card className="p-4 shadow border mb-4">
+                                    <h3 className="mb-4 text-indigo fw-bold">Pending Help Entries</h3>
+                                    {helpEntries.length === 0 ? (
+                                        <p className="text-center py-5 text-muted">No pending help entries.</p>
+                                    ) : (
+                                        <Table responsive hover>
+                                            <thead className="table-dark">
+                                                <tr><th>Type</th><th>Category</th><th>Title</th><th>Description</th><th>Date</th><th>Actions</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                {helpEntries.map(h => (
+                                                    <tr key={h.id}>
+                                                        <td><Badge bg={h.entry_type === 'seeking' ? 'danger' : 'success'}>{h.entry_type === 'seeking' ? 'Seeking' : 'Providing'}</Badge></td>
+                                                        <td><Badge bg="secondary">{h.category}</Badge></td>
+                                                        <td className="fw-bold">{h.title}</td>
+                                                        <td>
+                                                            <div className="text-truncate" style={{maxWidth: '200px'}}>{h.description}</div>
+                                                        </td>
+                                                        <td>{new Date(h.created_at).toLocaleDateString()}</td>
+                                                        <td>
+                                                            <Button variant="info" size="sm" onClick={() => {
+                                                                setPreviewHelpEntry(h);
+                                                                setAdminComment('');
+                                                            }}>View Details</Button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </Table>
+                                    )}
+                                </Card>
+                            </Tab.Pane>
+
+                            <Tab.Pane eventKey="donations">
+                                <Card className="p-4 shadow border mb-4">
+                                    <h3 className="mb-4 text-primary fw-bold">Update Donation Goal & Collections</h3>
+                                    <Form onSubmit={handleDonationSubmit}>
+                                        <Row>
+                                            <Col md={6}>
+                                                <Form.Group className="mb-3">
+                                                    <Form.Label className="fw-bold">Month</Form.Label>
+                                                    <Form.Select required value={donationGoal.month} onChange={e => setDonationGoal({ ...donationGoal, month: e.target.value })}>
+                                                        {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>)}
+                                                    </Form.Select>
+                                                </Form.Group>
+                                            </Col>
+                                            <Col md={6}>
+                                                <Form.Group className="mb-3">
+                                                    <Form.Label className="fw-bold">Year</Form.Label>
+                                                    <Form.Control type="number" required value={donationGoal.year} onChange={e => setDonationGoal({ ...donationGoal, year: e.target.value })} />
+                                                </Form.Group>
+                                            </Col>
+                                        </Row>
+                                        <Row>
+                                            <Col md={6}>
+                                                <Form.Group className="mb-3">
+                                                    <Form.Label className="fw-bold">Set Monthly Target (₹)</Form.Label>
+                                                    <Form.Control type="number" placeholder="e.g., 50000" value={donationGoal.target_amount} onChange={e => setDonationGoal({ ...donationGoal, target_amount: e.target.value })} />
+                                                    <Form.Text className="text-muted">Leave blank to keep existing target.</Form.Text>
+                                                </Form.Group>
+                                            </Col>
+                                            <Col md={6}>
+                                                <Form.Group className="mb-3">
+                                                    <Form.Label className="fw-bold text-success">Add Today's Collection (₹)</Form.Label>
+                                                    <Form.Control type="number" placeholder="e.g., 500" value={donationGoal.add_collection} onChange={e => setDonationGoal({ ...donationGoal, add_collection: e.target.value })} />
+                                                    <Form.Text className="text-muted">This amount will be added to the total collected so far.</Form.Text>
+                                                </Form.Group>
+                                            </Col>
+                                        </Row>
+                                        <Button variant="primary" type="submit" className="w-100 py-2 fw-bold" disabled={loading}>
+                                            {loading ? <Spinner size="sm" /> : 'Update Donations'}
+                                        </Button>
+                                    </Form>
+                                </Card>
+                            </Tab.Pane>
                         </Tab.Content>
                     </Col>
                 </Row>
             </Tab.Container>
+
+            {/* Help Entry Preview Modal */}
+            <Modal show={!!previewHelpEntry} onHide={() => { setPreviewHelpEntry(null); setAdminComment(''); }} size="lg" centered>
+                <Modal.Header closeButton className={previewHelpEntry?.entry_type === 'seeking' ? 'bg-danger text-white' : 'bg-success text-white'}>
+                    <Modal.Title>Review Help Entry: {previewHelpEntry?.title}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="d-flex justify-content-between mb-3">
+                        <Badge bg={previewHelpEntry?.entry_type === 'seeking' ? 'danger' : 'success'}>
+                            {previewHelpEntry?.entry_type === 'seeking' ? 'Seeking Help' : 'Providing Help'}
+                        </Badge>
+                        <Badge bg="secondary">{previewHelpEntry?.category}</Badge>
+                    </div>
+                    <p><strong>Description:</strong></p>
+                    <p style={{ whiteSpace: 'pre-wrap' }}>{previewHelpEntry?.description}</p>
+                    
+                    {previewHelpEntry?.media && previewHelpEntry.media.length > 0 && (
+                        <div className="mb-4">
+                            <strong>Attached Images:</strong>
+                            <div className="d-flex gap-3 mt-2 flex-wrap">
+                                {previewHelpEntry.media.map(m => (
+                                    <img key={m.id} src={`${API_BASE_URL}${m.url}`} alt="Attached" style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    <Form.Group className="mb-3 mt-4">
+                        <Form.Label className="fw-bold">Admin Comment (Required)</Form.Label>
+                        <Form.Control 
+                            as="textarea" 
+                            rows={3} 
+                            placeholder="Enter reason for approval or rejection..."
+                            value={adminComment}
+                            onChange={(e) => setAdminComment(e.target.value)}
+                        />
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="danger" onClick={() => handleHelpStatus(previewHelpEntry.id, 'rejected', adminComment)}>
+                        Reject
+                    </Button>
+                    <Button variant="success" onClick={() => handleHelpStatus(previewHelpEntry.id, 'approved', adminComment)}>
+                        Approve
+                    </Button>
+                </Modal.Footer>
+            </Modal>
 
         </Container>
     );

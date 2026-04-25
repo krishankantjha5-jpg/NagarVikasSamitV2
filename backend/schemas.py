@@ -120,3 +120,91 @@ class Leader(LeaderBase):
     class Config:
         from_attributes = True
 
+class UserCreate(BaseModel):
+    name: str
+    mobile: str
+    password: str
+    location: Optional[str] = None
+
+class UserLogin(BaseModel):
+    mobile: str
+    password: str
+
+class PasswordReset(BaseModel):
+    mobile: str
+    new_password: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    mobile: str
+    location: Optional[str] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class HelpEntryBase(BaseModel):
+    entry_type: str
+    category: str
+    title: str
+    description: str
+
+class HelpEntryCreate(HelpEntryBase):
+    media: List[MediaBase] = []
+
+class HelpEntryUpdate(BaseModel):
+    status: str
+    comment: str
+
+class HelpInterestResponse(BaseModel):
+    id: int
+    entry_id: int
+    user_id: int
+    status: str
+    created_at: datetime
+    user: UserResponse
+
+    class Config:
+        from_attributes = True
+
+class HelpEntryResponse(HelpEntryBase):
+    id: int
+    user_id: int
+    status: str
+    admin_comment: Optional[str] = None
+    created_at: datetime
+    media: List[Media] = []
+    user: UserResponse
+    interests: List[HelpInterestResponse] = []
+    
+    class Config:
+        from_attributes = True
+
+class UserDashboardResponse(BaseModel):
+    entries: List[HelpEntryResponse]
+    interested_entries: List[HelpEntryResponse]
+
+class KPIData(BaseModel):
+    seeking_help: int
+    wish_to_help: int
+    total_help_done: int
+
+class DonationGoalUpdate(BaseModel):
+    month: int
+    year: int
+    target_amount: Optional[float] = None
+    add_collection: Optional[float] = None
+
+class DonationGoalResponse(BaseModel):
+    id: int
+    month: int
+    year: int
+    target_amount: float
+    collected_amount: float
+    last_updated: datetime
+    class Config:
+        from_attributes = True
+
+class AvailableDate(BaseModel):
+    month: int
+    year: int

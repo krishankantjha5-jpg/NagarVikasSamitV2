@@ -15,6 +15,22 @@ from dotenv import load_dotenv
 
 from database import engine, get_db
 import models, schemas
+import bcrypt
+import jwt
+
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
+ALGORITHM = "HS256"
+
+def get_password_hash(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(plain_password, hashed_password):
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    to_encode.update({"exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 load_dotenv()
 
@@ -197,7 +213,11 @@ def create_volunteer(volunteer: schemas.VolunteerCreate, db: Session = Depends(g
 # LEADERS
 @app.get("/leaders", response_model=List[schemas.Leader])
 def get_leaders(db: Session = Depends(get_db)):
-    return db.query(models.Leader).all()
+    leaders = db.query(models.Leader).all()
+    # Filter realities for each leader to only show approved ones to the public
+    for leader in leaders:
+        leader.realities = [r for r in leader.realities if r.status == 'approved']
+    return leaders
 
 @app.post("/leaders", response_model=schemas.Leader)
 def create_leader(leader: schemas.LeaderCreate, db: Session = Depends(get_db)):
@@ -299,8 +319,10 @@ def get_approved_realities(leader_id: int, db: Session = Depends(get_db)):
 
 # ADMIN REALITIES MANAGEMENT
 @app.get("/admin/realities", response_model=List[schemas.Reality])
-def get_pending_realities(db: Session = Depends(get_db)):
-    return db.query(models.Reality).filter(models.Reality.status == "pending").all()
+def get_admin_realities(status: str = "pending", db: Session = Depends(get_db)):
+    if status == "all":
+        return db.query(models.Reality).all()
+    return db.query(models.Reality).filter(models.Reality.status == status).all()
 
 @app.patch("/admin/realities/{reality_id}", response_model=schemas.Reality)
 def update_reality_status(reality_id: int, update: schemas.RealityUpdate, db: Session = Depends(get_db)):
@@ -313,12 +335,24 @@ def update_reality_status(reality_id: int, update: schemas.RealityUpdate, db: Se
     db.refresh(db_reality)
     return db_reality
 
+@app.delete("/admin/realities/{reality_id}")
+def delete_reality(reality_id: int, db: Session = Depends(get_db)):
+    db_reality = db.query(models.Reality).filter(models.Reality.id == reality_id).first()
+    if not db_reality:
+        raise HTTPException(status_code=404, detail="Reality not found")
+    db.delete(db_reality)
+    db.commit()
+    return {"message": "Reality deleted"}
+
 # LOGIN
 @app.post("/login")
 def login(admin: schemas.AdminLogin):
     # Use environment variables for production security
-    env_user = os.getenv("ADMIN_USERNAME", "samiti")
-    env_pass = os.getenv("ADMIN_PASSWORD", "2024@samiti")
+    env_user = os.getenv("ADMIN_USERNAME")
+    env_pass = os.getenv("ADMIN_PASSWORD")
+
+    if not env_user or not env_pass:
+        raise HTTPException(status_code=500, detail="Admin credentials not configured in environment")
 
     if admin.username == env_user and admin.password == env_pass:
         return {"access_token": "fake-jwt-token", "token_type": "bearer"}
@@ -355,3 +389,210 @@ async def upload_image(file: UploadFile = File(...)):
         # Return a relative URL that your frontend can use via the /uploads mount
         # Ensure your VITE_API_URL is set correctly in frontend .env
         return {"image_url": f"/uploads/{unique_filename}"}
+
+# --- OUR PEOPLE (HELP ENTRIES) & USER AUTH ---
+
+@app.post("/users/register", response_model=schemas.UserResponse)
+def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.mobile == user.mobile).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Mobile number already registered")
+    hashed_pw = get_password_hash(user.password)
+    new_user = models.User(name=user.name, mobile=user.mobile, hashed_password=hashed_pw, location=user.location)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.post("/users/login")
+def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.mobile == user.mobile).first()
+    if not db_user:
+        raise HTTPException(status_code=401, detail="You are not registered")
+    if not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    access_token = create_access_token(data={"sub": str(db_user.id)})
+    return {"access_token": access_token, "token_type": "bearer", "user_id": db_user.id, "user_name": db_user.name}
+
+@app.post("/users/reset-password")
+def reset_password(payload: schemas.PasswordReset, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.mobile == payload.mobile).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Mobile number not registered")
+    
+    db_user.hashed_password = get_password_hash(payload.new_password)
+    db.commit()
+    return {"message": "Password updated successfully"}
+
+@app.get("/help-entries/public")
+def get_public_help_entries(db: Session = Depends(get_db)):
+    seeking = db.query(models.HelpEntry).filter(models.HelpEntry.status == "approved", models.HelpEntry.entry_type == "seeking").all()
+    providing = db.query(models.HelpEntry).filter(models.HelpEntry.status == "approved", models.HelpEntry.entry_type == "providing").all()
+    
+    total_seeking = db.query(models.HelpEntry).filter(models.HelpEntry.status == "completed", models.HelpEntry.entry_type == "seeking").count()
+    total_providing = db.query(models.HelpEntry).filter(models.HelpEntry.status == "completed", models.HelpEntry.entry_type == "providing").count()
+    
+    # KPI is how many help has been done (completed entries)
+    total_help_done = total_seeking + total_providing
+    
+    return {
+        "kpi": {
+            "seeking_help": total_seeking,
+            "wish_to_help": total_providing,
+            "total_help_done": total_help_done
+        },
+        "seeking": seeking,
+        "providing": providing
+    }
+
+@app.post("/help-entries", response_model=schemas.HelpEntryResponse)
+def create_help_entry(entry: schemas.HelpEntryCreate, user_id: int, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Rate limit: max 5 seeking requests per month
+    if entry.entry_type == "seeking":
+        now = datetime.datetime.utcnow()
+        count = db.query(models.HelpEntry).filter(
+            models.HelpEntry.user_id == user_id,
+            models.HelpEntry.entry_type == "seeking",
+            models.HelpEntry.created_at >= now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        ).count()
+        if count >= 5:
+            raise HTTPException(status_code=429, detail="You can only ask for help 5 times per month.")
+    
+    # We need to exclude media from entry.dict() for HelpEntry creation
+    entry_data = entry.dict(exclude={'media'})
+    db_entry = models.HelpEntry(**entry_data, user_id=user_id, status="pending")
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
+
+    # Add media
+    for m in entry.media:
+        db_media = models.Media(url=m.url, file_type=m.file_type, help_entry_id=db_entry.id)
+        db.add(db_media)
+    db.commit()
+    db.refresh(db_entry)
+    
+    return db_entry
+
+@app.post("/help-entries/{entry_id}/interest")
+def express_interest(entry_id: int, user_id: int, db: Session = Depends(get_db)):
+    db_entry = db.query(models.HelpEntry).filter(models.HelpEntry.id == entry_id).first()
+    if not db_entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+        
+    if db_entry.user_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot express interest in your own entry")
+        
+    # Rate limit: 10 interests per month
+    now = datetime.datetime.utcnow()
+    count = db.query(models.HelpInterest).filter(
+        models.HelpInterest.user_id == user_id,
+        models.HelpInterest.created_at >= now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    ).count()
+    if count >= 10:
+        raise HTTPException(status_code=429, detail="You can only express interest 10 times per month.")
+        
+    # Check if already interested
+    existing = db.query(models.HelpInterest).filter(models.HelpInterest.entry_id == entry_id, models.HelpInterest.user_id == user_id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Already expressed interest")
+        
+    interest = models.HelpInterest(entry_id=entry_id, user_id=user_id)
+    db.add(interest)
+    db.commit()
+    return {"status": "success"}
+
+@app.get("/users/{user_id}/dashboard", response_model=schemas.UserDashboardResponse)
+def get_user_dashboard(user_id: int, db: Session = Depends(get_db)):
+    # Entries without admin approval should not be seen inside dashboard
+    entries = db.query(models.HelpEntry).filter(
+        models.HelpEntry.user_id == user_id, 
+        models.HelpEntry.status != "pending"
+    ).all()
+    # Serialize with interests
+    interested_links = db.query(models.HelpInterest).filter(models.HelpInterest.user_id == user_id).all()
+    interested_entries = [link.entry for link in interested_links]
+    return {"entries": entries, "interested_entries": interested_entries}
+
+@app.patch("/help-entries/{entry_id}/complete")
+def mark_help_complete(entry_id: int, user_id: int, db: Session = Depends(get_db)):
+    db_entry = db.query(models.HelpEntry).filter(models.HelpEntry.id == entry_id).first()
+    if not db_entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    if db_entry.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    db_entry.status = "completed"
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry
+
+@app.get("/admin/help-entries", response_model=List[schemas.HelpEntryResponse])
+def get_pending_help_entries(db: Session = Depends(get_db)):
+    return db.query(models.HelpEntry).filter(models.HelpEntry.status == "pending").all()
+
+@app.patch("/admin/help-entries/{entry_id}", response_model=schemas.HelpEntryResponse)
+def update_help_entry_status(entry_id: int, update: schemas.HelpEntryUpdate, db: Session = Depends(get_db)):
+    db_entry = db.query(models.HelpEntry).filter(models.HelpEntry.id == entry_id).first()
+    if not db_entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+        
+    if not update.comment or not update.comment.strip():
+        raise HTTPException(status_code=400, detail="Admin comment is required")
+        
+    db_entry.status = update.status
+    db_entry.admin_comment = update.comment
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry
+
+@app.get("/donation-goal/current", response_model=schemas.DonationGoalResponse)
+def get_current_donation_goal(db: Session = Depends(get_db)):
+    now = datetime.datetime.utcnow()
+    month, year = now.month, now.year
+    goal = db.query(models.DonationGoal).filter(models.DonationGoal.month == month, models.DonationGoal.year == year).first()
+    if not goal:
+        goal = models.DonationGoal(month=month, year=year, target_amount=0.0, collected_amount=0.0)
+        db.add(goal)
+        db.commit()
+        db.refresh(goal)
+    return goal
+
+@app.post("/admin/donation-goal", response_model=schemas.DonationGoalResponse)
+def update_donation_goal(payload: schemas.DonationGoalUpdate, db: Session = Depends(get_db)):
+    goal = db.query(models.DonationGoal).filter(models.DonationGoal.month == payload.month, models.DonationGoal.year == payload.year).first()
+    if not goal:
+        goal = models.DonationGoal(month=payload.month, year=payload.year)
+        db.add(goal)
+        db.commit()
+        db.refresh(goal)
+    
+    if payload.target_amount is not None:
+        goal.target_amount = payload.target_amount
+    
+    if payload.add_collection is not None:
+        goal.collected_amount += payload.add_collection
+        
+    goal.last_updated = datetime.datetime.utcnow()
+    db.commit()
+    db.refresh(goal)
+    return goal
+
+@app.get("/activities/available-dates", response_model=List[schemas.AvailableDate])
+def get_available_activity_dates(db: Session = Depends(get_db)):
+    dates = db.query(models.Activity.month, models.Activity.year).distinct().all()
+    sorted_dates = sorted(dates, key=lambda x: (x.year, x.month), reverse=True)
+    return [{"month": d.month, "year": d.year} for d in sorted_dates]
+
+@app.get("/leaders/{leader_id}/available-dates", response_model=List[schemas.AvailableDate])
+def get_available_leader_dates(leader_id: int, db: Session = Depends(get_db)):
+    p_dates = db.query(models.Promise.month, models.Promise.year).filter(models.Promise.leader_id == leader_id).distinct().all()
+    r_dates = db.query(models.Reality.month, models.Reality.year).filter(models.Reality.leader_id == leader_id, models.Reality.status == 'approved').distinct().all()
+    all_dates = set(p_dates) | set(r_dates)
+    sorted_dates = sorted(list(all_dates), key=lambda x: (x.year, x.month), reverse=True)
+    return [{"month": d.month, "year": d.year} for d in sorted_dates]

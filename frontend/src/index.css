@@ -1,13 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&display=swap');
 
 :root {
-  --primary: #FF9933; /* Saffron - Indian Flag */
-  --secondary: #138808; /* Green - Indian Flag */
-  --accent: #000080; /* Navy Blue - Ashoka Chakra */
-  --light: #F8F9FA;
-  --dark: #212529;
-  --glass: rgba(255, 255, 255, 0.8);
-  --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --primary: #d97706; /* Amber / Muted Saffron */
+  --secondary: #059669; /* Emerald / Muted Green */
+  --accent: #1e3a8a; /* Deep Indigo / Slate Blue */
+  --light: #f8fafc;
+  --dark: #1e293b;
+  --glass: rgba(255, 255, 255, 0.85);
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
 }
 
 body {
@@ -47,8 +47,8 @@ h1, h2, h3, h4 {
 }
 
 .btn-primary:hover {
-  background-color: #e68a2e;
-  box-shadow: 0 4px 15px rgba(255, 153, 51, 0.4);
+  background-color: #b45309;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.25);
 }
 
 .header-container {
@@ -57,7 +57,7 @@ h1, h2, h3, h4 {
   align-items: center;
   padding: 1rem 2rem;
   background: white;
-  border-bottom: 3px solid var(--primary);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .logo-section {
@@ -162,4 +162,29 @@ h1, h2, h3, h4 {
 .help-item-card:hover {
     transform: translateX(5px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important;
+}
+
+/* Infinite Scroll Up Animation */
+.scrolling-container {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.scrolling-content-up {
+    position: absolute;
+    width: 100%;
+    animation: scrollUp 30s linear infinite;
+}
+
+.scrolling-content-up:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scrollUp {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(-100%); }
 }

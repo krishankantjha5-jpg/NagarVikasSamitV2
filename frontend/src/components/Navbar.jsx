@@ -5,8 +5,8 @@ import { useLang } from '../LanguageContext';
 import { useT } from '../translations';
 
 const navbarStyle = {
-    background: 'linear-gradient(90deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
-    borderBottom: '2px solid rgba(255,165,0,0.4)',
+    background: '#1e293b',
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
     padding: '0 1rem',
 };
 
@@ -23,8 +23,8 @@ const linkStyle = {
 
 const activeLinkStyle = {
     ...linkStyle,
-    color: '#ffa500',
-    borderBottom: '3px solid #ffa500',
+    color: '#d97706',
+    borderBottom: '3px solid #d97706',
 };
 
 const separatorStyle = {
@@ -40,15 +40,18 @@ const Navigation = () => {
     const { lang, toggle } = useLang();
     const T = useT(lang);
 
+    const isLoggedIn = !!localStorage.getItem('userToken');
+
     const navLinks = [
         { to: '/', label: T.home, end: true },
         { to: '/leaders', label: T.ourLeaders },
+        { to: '/our-people', label: T.ourPeople },
     ];
 
     return (
         <Navbar expand="lg" sticky="top" style={navbarStyle}>
             <Container fluid>
-                <Navbar.Toggle aria-controls="main-navbar-nav" style={{ borderColor: 'rgba(255,165,0,0.5)' }} />
+                <Navbar.Toggle aria-controls="main-navbar-nav" style={{ borderColor: 'rgba(217,119,6,0.5)' }} />
                 <Navbar.Collapse id="main-navbar-nav">
                     {/* Left nav links */}
                     <div className="d-flex align-items-center me-auto" style={{ flexWrap: 'wrap' }}>
@@ -72,8 +75,8 @@ const Navigation = () => {
                         title={lang === 'en' ? 'Switch to Hindi' : 'Switch to English'}
                         style={{
                             background: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,165,0,0.5)',
-                            color: '#ffa500',
+                            border: '1px solid rgba(217,119,6,0.5)',
+                            color: '#d97706',
                             borderRadius: '20px',
                             padding: '5px 16px',
                             fontWeight: 700,
@@ -89,16 +92,14 @@ const Navigation = () => {
 
                     {/* Volunteer button */}
                     <Button
-                        variant="warning"
-                        className="fw-bold"
+                        className="fw-bold text-white"
                         style={{
                             whiteSpace: 'nowrap',
                             borderRadius: '20px',
                             padding: '7px 22px',
-                            background: 'linear-gradient(90deg, #f7971e, #ffd200)',
+                            background: '#d97706',
                             border: 'none',
-                            color: '#1a1a1a',
-                            boxShadow: '0 2px 10px rgba(247,151,30,0.4)',
+                            boxShadow: '0 2px 10px rgba(217,119,6,0.3)',
                             fontSize: '0.9rem',
                         }}
                         onClick={() => window.dispatchEvent(new CustomEvent('openVolunteerModal'))}
