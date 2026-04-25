@@ -85,6 +85,7 @@ async def health_check(db: Session = Depends(get_db)):
     return {
         "status": "healthy",
         "database": db_status,
+        "database_type": engine.name,
         "allowed_origins": origins,
         "timestamp": time.time()
     }
