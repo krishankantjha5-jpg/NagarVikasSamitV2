@@ -61,7 +61,7 @@ if os.path.exists("./dist"):
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")]
+origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,https://zealous-forest-052626500.7.azurestaticapps.net").split(",")]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -73,10 +73,18 @@ app.add_middleware(
 
 # HEALTH CHECK (important for Azure)
 @app.get("/health")
-async def health_check():
-    import time
+async def health_check(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db_status = "disconnected"
+    try:
+        db.execute(text("SELECT 1")).fetchone()
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
     return {
         "status": "healthy",
+        "database": db_status,
         "allowed_origins": origins,
         "timestamp": time.time()
     }
