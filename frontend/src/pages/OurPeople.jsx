@@ -26,7 +26,9 @@ const OurPeople = () => {
     const fetchEntries = async () => {
         try {
             const res = await axios.get(`${API_BASE_URL}/help-entries/public`);
-            setData(res.data);
+            if (res.data && typeof res.data === 'object' && res.data.seeking) {
+                setData(res.data);
+            }
         } catch (err) {
             console.error(err);
         }

@@ -53,12 +53,12 @@ const Admin = () => {
                 axios.get(`${API_BASE_URL}/admin/realities?status=all`),
                 axios.get(`${API_BASE_URL}/admin/help-entries`),
             ]);
-            setActivities(aRes.data);
-            setPosts(pRes.data);
-            setVolunteers(vRes.data);
-            setLeaders(lRes.data);
-            setRealities(rRes.data);
-            setHelpEntries(hRes.data);
+            if (Array.isArray(aRes.data)) setActivities(aRes.data);
+            if (Array.isArray(pRes.data)) setPosts(pRes.data);
+            if (Array.isArray(vRes.data)) setVolunteers(vRes.data);
+            if (Array.isArray(lRes.data)) setLeaders(lRes.data);
+            if (Array.isArray(rRes.data)) setRealities(rRes.data);
+            if (Array.isArray(hRes.data)) setHelpEntries(hRes.data);
         } catch (err) { console.error("Refresh failed", err); }
     };
 

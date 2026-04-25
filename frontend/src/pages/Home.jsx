@@ -30,12 +30,14 @@ const Home = () => {
                     axios.get(`${API_BASE_URL}/posts`),
                     axios.get(`${API_BASE_URL}/activities/available-dates`)
                 ]);
-                setActivities(workRes.data);
-                setPosts(postsRes.data);
-                setAvailableDates(datesRes.data);
-                if (datesRes.data.length > 0) {
-                    setFilterYear(datesRes.data[0].year);
-                    setFilterMonth(datesRes.data[0].month);
+                if (Array.isArray(workRes.data)) setActivities(workRes.data);
+                if (Array.isArray(postsRes.data)) setPosts(postsRes.data);
+                if (Array.isArray(datesRes.data)) {
+                    setAvailableDates(datesRes.data);
+                    if (datesRes.data.length > 0) {
+                        setFilterYear(datesRes.data[0].year);
+                        setFilterMonth(datesRes.data[0].month);
+                    }
                 }
             } catch (err) {
                 console.error("Fetch error", err);

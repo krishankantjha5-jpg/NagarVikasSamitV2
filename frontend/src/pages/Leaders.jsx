@@ -28,10 +28,12 @@ const Leaders = () => {
     useEffect(() => {
         axios.get(`${API_BASE_URL}/leaders`)
             .then(res => {
-                setLeaders(res.data);
-                if (res.data.length > 0) {
-                    const randomLeader = res.data[Math.floor(Math.random() * res.data.length)];
-                    setSelectedLeaderId(randomLeader.id.toString());
+                if (Array.isArray(res.data)) {
+                    setLeaders(res.data);
+                    if (res.data.length > 0) {
+                        const randomLeader = res.data[Math.floor(Math.random() * res.data.length)];
+                        setSelectedLeaderId(randomLeader.id.toString());
+                    }
                 }
             })
             .catch(err => console.error(err))
@@ -42,13 +44,15 @@ const Leaders = () => {
         if (selectedLeaderId) {
             axios.get(`${API_BASE_URL}/leaders/${selectedLeaderId}/available-dates`)
                 .then(res => {
-                    setAvailableDates(res.data);
-                    if (res.data.length > 0) {
-                        setPromiseFilters({ month: res.data[0].month, year: res.data[0].year });
-                        setRealityFilters({ month: res.data[0].month, year: res.data[0].year });
-                    } else {
-                        setPromiseFilters({ month: '', year: '' });
-                        setRealityFilters({ month: '', year: '' });
+                    if (Array.isArray(res.data)) {
+                        setAvailableDates(res.data);
+                        if (res.data.length > 0) {
+                            setPromiseFilters({ month: res.data[0].month, year: res.data[0].year });
+                            setRealityFilters({ month: res.data[0].month, year: res.data[0].year });
+                        } else {
+                            setPromiseFilters({ month: '', year: '' });
+                            setRealityFilters({ month: '', year: '' });
+                        }
                     }
                 })
                 .catch(err => console.error(err));
@@ -238,9 +242,9 @@ const Leaders = () => {
                                                         {p.video_url && (
                                                             <Col md={7}>
                                                                 <div className="rounded-3 overflow-hidden shadow-sm" style={{ border: '1px solid #ddd', height: '300px' }}>
-                                                                    <iframe 
-                                                                        src={getYouTubeEmbedUrl(p.video_url)} 
-                                                                        title="Promise Video" 
+                                                                    <iframe
+                                                                        src={getYouTubeEmbedUrl(p.video_url)}
+                                                                        title="Promise Video"
                                                                         className="w-100 h-100"
                                                                         style={{ border: 'none' }}
                                                                         allowFullScreen
@@ -315,9 +319,9 @@ const Leaders = () => {
                                                                             <div className="d-flex flex-column gap-3">
                                                                                 {r.media.filter(m => m.file_type === 'video').map((m, idx) => (
                                                                                     <div key={idx} className="rounded-3 overflow-hidden shadow-sm" style={{ border: '1px solid #ddd', height: '300px' }}>
-                                                                                        <iframe 
-                                                                                            src={getYouTubeEmbedUrl(m.url)} 
-                                                                                            title="Reality Video" 
+                                                                                        <iframe
+                                                                                            src={getYouTubeEmbedUrl(m.url)}
+                                                                                            title="Reality Video"
                                                                                             className="w-100 h-100"
                                                                                             style={{ border: 'none' }}
                                                                                             allowFullScreen
@@ -404,7 +408,7 @@ const Leaders = () => {
                 </div>
             )}
 
-            <div className="text-center text-muted small py-4 bg-white border-top">नगर विकास समिति प्रदर्शन ट्रैकिंग सिस्टम</div>
+            <div className="text-center text-muted small py-4 bg-white border-top">Nagar Vikas Samiti Performance Tracking System</div>
         </Container>
     );
 };
