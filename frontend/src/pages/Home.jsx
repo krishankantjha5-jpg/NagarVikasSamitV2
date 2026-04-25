@@ -132,11 +132,11 @@ const Home = () => {
                 <div className="px-4 py-3 border-bottom bg-white d-flex align-items-center">
                     <h2 className="mb-0 fw-bold text-dark">{T.ourWork}</h2>
                 </div>
-                <Row className="g-0 h-100">
-                    {/* Sidebar for Month-Year - 10% */}
-                    <Col style={{ flex: '0 0 10%', maxWidth: '10%' }} className="bg-light border-end p-3">
+                <Row className="g-0">
+                    {/* Sidebar for Month-Year - Top on mobile, Left on desktop */}
+                    <Col xs={12} lg={2} className="bg-light border-end p-3">
                         <h5 className="fw-bold mb-3 text-secondary">{T.selectMonth}</h5>
-                        <div className="list-group list-group-flush mb-4 custom-scrollbar" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                        <div className="list-group list-group-horizontal-md list-group-flush mb-4 custom-scrollbar flex-lg-column overflow-auto" style={{ maxHeight: '400px' }}>
                             {availableDates.map((d, i) => (
                                 <button
                                     key={i}
@@ -153,8 +153,8 @@ const Home = () => {
                             {availableDates.length === 0 && <p className="text-muted small">No activities recorded.</p>}
                         </div>
                     </Col>
-                    {/* Content Area - 90% */}
-                    <Col style={{ flex: '0 0 90%', maxWidth: '90%' }} className="p-4">
+                    {/* Content Area */}
+                    <Col xs={12} lg={10} className="p-3 p-md-4">
                         {filterMonth && filterYear ? (
                             <>
                                 <Form.Group className="mb-4">
@@ -185,8 +185,8 @@ const Home = () => {
                                                     </div>
                                                     <Carousel className="rounded shadow overflow-hidden" pause="hover" interval={3000}>
                                                         {images.map((img, idx) => (
-                                                            <Carousel.Item key={idx} style={{ height: '450px' }}>
-                                                                <img src={getMediaUrl(img.url)} className="d-block w-100 h-100" style={{ objectFit: 'cover' }} alt="Work" />
+                                                            <Carousel.Item key={idx} className="responsive-carousel-item" style={{ height: 'auto', minHeight: '300px', maxHeight: '500px' }}>
+                                                                <img src={getMediaUrl(img.url)} className="d-block w-100" style={{ height: '100%', objectFit: 'contain', background: '#f8f9fa' }} alt="Work" />
                                                             </Carousel.Item>
                                                         ))}
                                                     </Carousel>
@@ -198,14 +198,14 @@ const Home = () => {
                                                     <div className="mb-3 text-secondary">
                                                         <h4 className="mb-0 fw-bold">{T.videos}</h4>
                                                     </div>
-                                                    <div className="video-scroll-container d-flex flex-column gap-3" style={{ maxHeight: '450px', overflowY: 'auto' }}>
+                                                    <div className="video-scroll-container d-flex flex-column gap-3" style={{ maxHeight: '500px', overflowY: 'auto' }}>
                                                         {videos.map((vid, idx) => (
-                                                            <div key={idx} className="rounded shadow-sm overflow-hidden border" style={{ height: '450px' }}>
+                                                            <div key={idx} className="rounded shadow-sm overflow-hidden border" style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                                                                 <iframe
                                                                     src={getEmbedUrl(vid.url)}
                                                                     title="Video Documentation"
                                                                     className="w-100 h-100"
-                                                                    style={{ border: 'none' }}
+                                                                    style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
                                                                     allowFullScreen
                                                                 ></iframe>
                                                             </div>
@@ -235,10 +235,9 @@ const Home = () => {
                     </Card.Header>
                     <Card.Body className="p-0">
                         <Row className="g-0">
-                            {slots.map(({ type, icon, label, headerBg, emptyLabel, post }) => (
-                                <Col md={6} lg={6} key={type} className="p-0 border">
+                            {slots.map(({ type, label, headerBg, emptyLabel, post }) => (
+                                <Col md={12} lg={6} key={type} className="p-0 border">
                                     <Card className="h-100 border-0 rounded-0">
-                                        {/* Section Name Header */}
                                         <div style={{
                                             background: headerBg,
                                             color: '#fff',
@@ -247,10 +246,13 @@ const Home = () => {
                                             fontSize: '0.95rem',
                                             letterSpacing: '0.5px',
                                             textTransform: 'uppercase',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
                                         }}>
                                             <span>{label}</span>
                                             {post && (
-                                                <small style={{ marginLeft: 'auto', fontWeight: 400, textTransform: 'none', opacity: 0.85, fontSize: '0.8rem' }}>
+                                                <small className="d-none d-sm-inline" style={{ fontWeight: 400, textTransform: 'none', opacity: 0.85, fontSize: '0.8rem' }}>
                                                     {new Date(post.created_at).toLocaleDateString()}
                                                 </small>
                                             )}
@@ -260,7 +262,7 @@ const Home = () => {
                                             <>
                                                 {/* Media Area */}
                                                 {post.post_type === 'campaign' ? (
-                                                    <div style={{ height: '448px' }}>
+                                                    <div style={{ height: 'auto', minHeight: '300px', maxHeight: '448px' }}>
                                                         {post.media && post.media.length > 0 ? (
                                                             <Carousel
                                                                 className="post-media-carousel shadow-sm h-100"
@@ -270,15 +272,15 @@ const Home = () => {
                                                                 controls={post.media.length > 1}
                                                             >
                                                                 {post.media.map((m, idx) => (
-                                                                    <Carousel.Item key={idx} style={{ height: '448px' }}>
+                                                                    <Carousel.Item key={idx} style={{ height: '100%', minHeight: '300px' }}>
                                                                         {m.file_type === 'image' ? (
-                                                                            <img src={getMediaUrl(m.url)} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement Media" />
+                                                                            <img src={getMediaUrl(m.url)} className="w-100 h-100" style={{ objectFit: 'contain', background: '#f8f9fa' }} alt="Announcement Media" />
                                                                         ) : (
-                                                                            <div className="h-100 bg-black d-flex align-items-center justify-content-center">
+                                                                            <div className="h-100 bg-black d-flex align-items-center justify-content-center" style={{ minHeight: '300px' }}>
                                                                                 <iframe
                                                                                     src={getEmbedUrl(m.url)}
                                                                                     title="Announcement Video"
-                                                                                    style={{ width: '100%', height: '100%', border: 'none' }}
+                                                                                    style={{ width: '100%', height: '100%', border: 'none', minHeight: '300px' }}
                                                                                     allowFullScreen
                                                                                 ></iframe>
                                                                             </div>
@@ -287,14 +289,14 @@ const Home = () => {
                                                                 ))}
                                                             </Carousel>
                                                         ) : post.image_url ? (
-                                                            <img src={getMediaUrl(post.image_url)} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Announcement" />
+                                                            <img src={getMediaUrl(post.image_url)} className="w-100 h-100" style={{ objectFit: 'contain', background: '#f8f9fa' }} alt="Announcement" />
                                                         ) : null}
                                                     </div>
                                                 ) : (
                                                     /* Daily Thought: Standard Layout (One image if any) */
                                                     post.image_url && (
-                                                        <div style={{ height: '220px', overflow: 'hidden' }}>
-                                                            <img src={getMediaUrl(post.image_url)} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="Daily Thought" />
+                                                        <div style={{ height: 'auto', maxHeight: '220px', overflow: 'hidden' }}>
+                                                            <img src={getMediaUrl(post.image_url)} className="w-100" style={{ objectFit: 'contain', background: '#f8f9fa' }} alt="Daily Thought" />
                                                         </div>
                                                     )
                                                 )}
@@ -302,16 +304,16 @@ const Home = () => {
                                                 {/* Text Area */}
                                                 <Card.Body
                                                     className="p-3 d-flex flex-column"
-                                                    style={{ height: post.post_type === 'campaign' ? '112px' : '340px' }}
+                                                    style={{ height: 'auto', minHeight: post.post_type === 'campaign' ? '112px' : '300px' }}
                                                 >
                                                     <h4 className={`${post.post_type === 'campaign' ? 'h6' : 'h5'} fw-bold mb-2`}>{post.subject}</h4>
-                                                    <div style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '5px' }} className="custom-scrollbar">
+                                                    <div style={{ overflowY: 'auto', maxHeight: '200px', flexGrow: 1, paddingRight: '5px' }} className="custom-scrollbar">
                                                         <p className="text-dark small text-break mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{post.content}</p>
                                                     </div>
                                                 </Card.Body>
                                             </>
                                         ) : (
-                                            <Card.Body className="d-flex flex-column align-items-center justify-content-center" style={{ height: '420px', color: '#adb5bd' }}>
+                                            <Card.Body className="d-flex flex-column align-items-center justify-content-center" style={{ height: '300px', color: '#adb5bd' }}>
                                                 <p className="fw-bold mb-1" style={{ fontSize: '1rem' }}>{emptyLabel || label}</p>
                                                 <small>{T.checkBackSoon}</small>
                                             </Card.Body>

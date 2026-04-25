@@ -32,13 +32,13 @@ const Header = () => {
                     }
                 `}
             </style>
-            <div className="header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'white', borderBottom: '1px solid #e2e8f0' }}>
-                <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <img src={logo} alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
-                    <h2 style={{ margin: 0, fontSize: '1.6rem', color: '#1e293b', fontWeight: '700', letterSpacing: '-0.5px' }}>{T.orgName}</h2>
+            <div className="header-container d-flex justify-content-between align-items-center px-3 px-md-5 py-2 py-md-3 bg-white border-bottom">
+                <div className="logo-section d-flex align-items-center gap-2 gap-md-3">
+                    <img src={logo} alt="Logo" style={{ width: 'clamp(45px, 8vw, 65px)', height: 'clamp(45px, 8vw, 65px)', borderRadius: '50%', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                    <h1 style={{ margin: 0, fontSize: 'clamp(1.1rem, 4vw, 1.7rem)', color: '#1e293b', fontWeight: '800', letterSpacing: '-0.5px' }}>{T.orgName}</h1>
                 </div>
-                <div className="chakra-section" style={{ display: 'flex', alignItems: 'center', animation: 'spin 20s linear infinite' }}>
-                    <svg viewBox="0 0 100 100" width="55" height="55" xmlns="http://www.w3.org/2000/svg">
+                <div className="chakra-section d-none d-sm-flex align-items-center" style={{ animation: 'spin 20s linear infinite' }}>
+                    <svg viewBox="0 0 100 100" width="clamp(35px, 6vw, 55px)" height="clamp(35px, 6vw, 55px)" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="50" cy="50" r="46" fill="none" stroke="#1e3a8a" strokeWidth="3"/>
                         <circle cx="50" cy="50" r="7" fill="#1e3a8a"/>
                         {Array.from({length: 24}).map((_, i) => (

@@ -139,7 +139,7 @@ const Leaders = () => {
                 <Card.Body className="p-0">
                     <Row className="g-0">
                         {/* Left/Main Side: Selection and Details */}
-                        <Col lg={7} className="p-4 p-md-5 d-flex flex-column justify-content-center">
+                        <Col xs={12} lg={7} className="p-4 p-md-5 d-flex flex-column justify-content-center">
                             <div className="mb-4">
                                 <Form.Label className="fw-bold text-secondary mb-2 small text-uppercase ls-1">{T.selectLeaderToView}</Form.Label>
                                 <Form.Select
@@ -167,7 +167,7 @@ const Leaders = () => {
                         </Col>
 
                         {/* Right Side: Photo */}
-                        <Col lg={5} className="position-relative" style={{ minHeight: '400px' }}>
+                        <Col xs={12} lg={5} className="position-relative" style={{ minHeight: 'clamp(300px, 50vw, 500px)' }}>
                             {selectedLeader && (
                                 <img
                                     src={getMediaUrl(selectedLeader.image_url) || 'https://via.placeholder.com/600x800?text=No+Photo'}
@@ -186,10 +186,10 @@ const Leaders = () => {
             {selectedLeader && (
                 <div className="animate-fadeIn px-0">
                     <Row className="g-0 border-top">
-                        {/* Sidebar for Month-Year - 10% */}
-                        <Col style={{ flex: '0 0 10%', maxWidth: '10%' }} className="bg-white border-end p-3">
+                        {/* Sidebar for Month-Year - Top on mobile, Left on desktop */}
+                        <Col xs={12} lg={2} className="bg-white border-end p-3">
                             <h5 className="fw-bold mb-3 text-secondary text-uppercase small ls-1">Select Date</h5>
-                            <div className="list-group list-group-flush mb-4 custom-scrollbar" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                            <div className="list-group list-group-horizontal-md list-group-flush mb-4 custom-scrollbar flex-lg-column overflow-auto" style={{ maxHeight: '600px' }}>
                                 {availableDates.map((d, i) => (
                                     <button
                                         key={i}
@@ -207,8 +207,8 @@ const Leaders = () => {
                             </div>
                         </Col>
 
-                        {/* Content Area - 90% */}
-                        <Col style={{ flex: '0 0 90%', maxWidth: '90%' }} className="bg-white">
+                        {/* Content Area */}
+                        <Col xs={12} lg={10} className="bg-white">
                             {/* PERFORMANCE TRACKING HEADER */}
                             <div className="p-4 border-bottom bg-white d-flex justify-content-between align-items-center">
                                 <h2 className="mb-0 fw-bold text-dark">{T.performanceTracking}</h2>
@@ -241,12 +241,12 @@ const Leaders = () => {
                                                         </Col>
                                                         {p.video_url && (
                                                             <Col md={7}>
-                                                                <div className="rounded-3 overflow-hidden shadow-sm" style={{ border: '1px solid #ddd', height: '300px' }}>
+                                                                <div className="rounded-3 overflow-hidden shadow-sm mt-3 mt-md-0" style={{ border: '1px solid #ddd', position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                                                                     <iframe
                                                                         src={getYouTubeEmbedUrl(p.video_url)}
                                                                         title="Promise Video"
                                                                         className="w-100 h-100"
-                                                                        style={{ border: 'none' }}
+                                                                        style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
                                                                         allowFullScreen
                                                                     ></iframe>
                                                                 </div>
@@ -305,8 +305,8 @@ const Leaders = () => {
                                                                             <h6 className="fw-bold text-secondary mb-2 small text-uppercase">Photos</h6>
                                                                             <Carousel indicators={true} className="rounded-3 overflow-hidden shadow-sm">
                                                                                 {r.media.filter(m => m.file_type === 'image').map((m, idx) => (
-                                                                                    <Carousel.Item key={idx} style={{ height: '300px' }}>
-                                                                                        <img src={getMediaUrl(m.url)} className="d-block w-100 h-100" style={{ objectFit: 'cover' }} alt="Reality" />
+                                                                                    <Carousel.Item key={idx} style={{ height: 'auto', minHeight: '250px', maxHeight: '400px' }}>
+                                                                                        <img src={getMediaUrl(m.url)} className="d-block w-100" style={{ height: '100%', objectFit: 'contain', background: '#f8f9fa' }} alt="Reality" />
                                                                                     </Carousel.Item>
                                                                                 ))}
                                                                             </Carousel>
@@ -318,12 +318,12 @@ const Leaders = () => {
                                                                             <h6 className="fw-bold text-secondary mb-2 small text-uppercase">Videos</h6>
                                                                             <div className="d-flex flex-column gap-3">
                                                                                 {r.media.filter(m => m.file_type === 'video').map((m, idx) => (
-                                                                                    <div key={idx} className="rounded-3 overflow-hidden shadow-sm" style={{ border: '1px solid #ddd', height: '300px' }}>
+                                                                                    <div key={idx} className="rounded-3 overflow-hidden shadow-sm" style={{ border: '1px solid #ddd', position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                                                                                         <iframe
                                                                                             src={getYouTubeEmbedUrl(m.url)}
                                                                                             title="Reality Video"
                                                                                             className="w-100 h-100"
-                                                                                            style={{ border: 'none' }}
+                                                                                            style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
                                                                                             allowFullScreen
                                                                                         ></iframe>
                                                                                     </div>

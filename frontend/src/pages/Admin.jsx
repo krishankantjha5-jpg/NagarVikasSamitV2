@@ -341,16 +341,16 @@ const Admin = () => {
             <Tab.Container defaultActiveKey="work">
                 <Row className="g-4">
                     <Col lg={3}>
-                        <Nav variant="pills" className="flex-column p-3 shadow-lg" style={navStyle}>
-                            <Nav.Item className="mb-3"><Nav.Link eventKey="work" className="text-white py-3 fw-bold text-center">Manage Our Work</Nav.Link></Nav.Item>
-                            <Nav.Item className="mb-3"><Nav.Link eventKey="leaders" className="text-white py-3 fw-bold text-center">Manage Leaders</Nav.Link></Nav.Item>
-                            <Nav.Item className="mb-3"><Nav.Link eventKey="approvals" className="text-white py-3 fw-bold text-center">Reality Approvals <Badge bg="danger" className="ms-2">{realities.length}</Badge></Nav.Link></Nav.Item>
-                            <Nav.Item className="mb-3"><Nav.Link eventKey="thoughts" className="text-white py-3 fw-bold text-center">Announcements</Nav.Link></Nav.Item>
-                            <Nav.Item className="mb-3"><Nav.Link eventKey="help" className="text-white py-3 fw-bold text-center">Community Help <Badge bg="danger" className="ms-2">{helpEntries.length}</Badge></Nav.Link></Nav.Item>
-                            <Nav.Item className="mb-3"><Nav.Link eventKey="volunteers" className="text-white py-3 fw-bold text-center">Volunteers</Nav.Link></Nav.Item>
-                            <Nav.Item className="mb-3"><Nav.Link eventKey="donations" className="text-white py-3 fw-bold text-center">Manage Donations</Nav.Link></Nav.Item>
+                        <Nav variant="pills" className="flex-lg-column p-2 p-md-3 shadow-lg flex-row overflow-auto text-nowrap mb-4 mb-lg-0" style={navStyle}>
+                            <Nav.Item className="mb-lg-3"><Nav.Link eventKey="work" className="text-white py-2 py-md-3 px-3 fw-bold text-center">Manage Our Work</Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-lg-3"><Nav.Link eventKey="leaders" className="text-white py-2 py-md-3 px-3 fw-bold text-center">Manage Leaders</Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-lg-3"><Nav.Link eventKey="approvals" className="text-white py-2 py-md-3 px-3 fw-bold text-center">Reality Approvals <Badge bg="danger" className="ms-1 ms-md-2">{realities.length}</Badge></Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-lg-3"><Nav.Link eventKey="thoughts" className="text-white py-2 py-md-3 px-3 fw-bold text-center">Announcements</Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-lg-3"><Nav.Link eventKey="help" className="text-white py-2 py-md-3 px-3 fw-bold text-center">Community Help <Badge bg="danger" className="ms-1 ms-md-2">{helpEntries.length}</Badge></Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-lg-3"><Nav.Link eventKey="volunteers" className="text-white py-2 py-md-3 px-3 fw-bold text-center">Volunteers</Nav.Link></Nav.Item>
+                            <Nav.Item className="mb-lg-3"><Nav.Link eventKey="donations" className="text-white py-2 py-md-3 px-3 fw-bold text-center">Manage Donations</Nav.Link></Nav.Item>
                         </Nav>
-                        <Button variant="outline-danger" className="w-100 mt-4 fw-bold" onClick={() => setIsLoggedIn(false)}>Logout</Button>
+                        <Button variant="outline-danger" className="w-100 mt-2 mt-md-4 fw-bold" onClick={() => setIsLoggedIn(false)}>Logout</Button>
                     </Col>
 
                     <Col lg={9}>

@@ -121,25 +121,25 @@ const OurPeople = () => {
             <Container>
                 {/* KPI Counter */}
                 <div className="text-center mb-5">
-                    <h1 className="fw-bold" style={{ color: '#1a237e' }}>{T.ourPeople}</h1>
-                    <div className="d-inline-flex align-items-center justify-content-center p-3 rounded shadow-sm bg-white mt-3 border border-primary">
-                        <div className="text-center px-4 border-end">
-                            <h3 className="mb-0 text-danger fw-bold">{data.kpi.seeking_help}</h3>
-                            <small className="text-muted text-uppercase fw-bold">{T.seekingHelp}</small>
+                    <h1 className="fw-bold px-2" style={{ color: '#1a237e', fontSize: 'clamp(1.8rem, 5vw, 2.5rem)' }}>{T.ourPeople}</h1>
+                    <div className="d-inline-flex flex-wrap align-items-center justify-content-center p-2 p-md-3 rounded shadow-sm bg-white mt-3 border border-primary w-100 w-md-auto mx-auto">
+                        <div className="text-center px-3 px-md-4 border-end mb-2 mb-md-0">
+                            <h3 className="mb-0 text-danger fw-bold" style={{ fontSize: 'clamp(1.2rem, 3vw, 1.8rem)' }}>{data.kpi.seeking_help}</h3>
+                            <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.7rem' }}>{T.seekingHelp}</small>
                         </div>
-                        <div className="text-center px-4 border-end">
-                            <h3 className="mb-0 text-success fw-bold">{data.kpi.wish_to_help}</h3>
-                            <small className="text-muted text-uppercase fw-bold">{T.wishToHelp}</small>
+                        <div className="text-center px-3 px-md-4 border-end mb-2 mb-md-0">
+                            <h3 className="mb-0 text-success fw-bold" style={{ fontSize: 'clamp(1.2rem, 3vw, 1.8rem)' }}>{data.kpi.wish_to_help}</h3>
+                            <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.7rem' }}>{T.wishToHelp}</small>
                         </div>
-                        <div className="text-center px-4">
-                            <h2 className="mb-0 text-primary fw-bold">{data.kpi.total_help_done}</h2>
-                            <small className="text-muted text-uppercase fw-bold">{T.totalHelpDone}</small>
+                        <div className="text-center px-3 px-md-4">
+                            <h2 className="mb-0 text-primary fw-bold" style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)' }}>{data.kpi.total_help_done}</h2>
+                            <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.7rem' }}>{T.totalHelpDone}</small>
                         </div>
                     </div>
                 </div>
 
-                <div className="text-center mb-4 d-flex justify-content-center gap-3">
-                    <Button variant="warning" className="fw-bold px-4 rounded-pill shadow-sm" onClick={() => {
+                <div className="text-center mb-4 d-flex flex-wrap justify-content-center gap-2 gap-md-3">
+                    <Button variant="warning" className="fw-bold px-3 px-md-4 rounded-pill shadow-sm" onClick={() => {
                         if (!isLoggedIn) setShowAuth(true);
                         else setShowSubmitModal(true);
                     }}>
@@ -147,10 +147,10 @@ const OurPeople = () => {
                     </Button>
                     {isLoggedIn && (
                         <>
-                            <Button variant="outline-primary" className="fw-bold px-4 rounded-pill shadow-sm bg-white" onClick={() => navigate('/dashboard')}>
+                            <Button variant="outline-primary" className="fw-bold px-3 px-md-4 rounded-pill shadow-sm bg-white" onClick={() => navigate('/dashboard')}>
                                 {T.dashboard}
                             </Button>
-                            <Button variant="outline-danger" className="fw-bold px-4 rounded-pill shadow-sm bg-white" onClick={() => {
+                            <Button variant="outline-danger" className="fw-bold px-3 px-md-4 rounded-pill shadow-sm bg-white" onClick={() => {
                                 localStorage.removeItem('userToken');
                                 localStorage.removeItem('userId');
                                 localStorage.removeItem('userName');
@@ -164,12 +164,12 @@ const OurPeople = () => {
 
                 <Row className="g-4">
                     {/* Seeking Help Column */}
-                    <Col md={6}>
+                    <Col xs={12} md={6}>
                         <Card className="shadow-sm border-0 h-100 overflow-hidden" style={{ borderRadius: '15px', backgroundColor: '#fff5f5' }}>
                             <Card.Header className="text-white text-center py-3" style={{ backgroundColor: '#be123c', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
                                 <h4 className="mb-0 fw-bold">{T.seekingHelp}</h4>
                             </Card.Header>
-                            <Card.Body className="p-0 position-relative" style={{ height: '500px' }}>
+                            <Card.Body className="p-0 position-relative" style={{ minHeight: '400px', maxHeight: '600px', height: '50vh' }}>
                                 <div className="scrolling-container">
                                     <div className="scrolling-content-up">
                                         {data.seeking.map((entry, idx) => (
@@ -193,12 +193,12 @@ const OurPeople = () => {
                     </Col>
 
                     {/* Wish to Help Column */}
-                    <Col md={6}>
+                    <Col xs={12} md={6}>
                         <Card className="shadow-sm border-0 h-100 overflow-hidden" style={{ borderRadius: '15px', backgroundColor: '#f0fdf4' }}>
                             <Card.Header className="text-white text-center py-3" style={{ backgroundColor: '#059669', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
                                 <h4 className="mb-0 fw-bold">{T.wishToHelp}</h4>
                             </Card.Header>
-                            <Card.Body className="p-0 position-relative" style={{ height: '500px' }}>
+                            <Card.Body className="p-0 position-relative" style={{ minHeight: '400px', maxHeight: '600px', height: '50vh' }}>
                                 <div className="scrolling-container">
                                     <div className="scrolling-content-up">
                                         {data.providing.map((entry, idx) => (
