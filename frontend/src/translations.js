@@ -44,11 +44,11 @@ const t = {
 
 
         // Footer
-        footerTagline: 'Empowering communities and building a better city together — one neighbourhood at a time.',
+        footerTagline: 'More power to my people',
         followUs: 'Follow Us',
         contactUs: 'Contact Us',
         footerCopy: '© 2024 नगर विकास समिति। सर्वाधिकार सुरक्षित।',
-        footerMotto: 'Empowering Communities, Developing Cities.',
+        footerMotto: 'More power to my people',
 
         // Admin & Leaders
         manageLeaders: 'Manage Leaders',
@@ -175,11 +175,11 @@ const t = {
 
 
         // Footer
-        footerTagline: 'समुदायों को सशक्त बनाना और मिलकर एक बेहतर शहर बनाना — एक मोहल्ले से एक कदम आगे।',
+        footerTagline: 'मेरे लोगों को अधिक शक्ति',
         followUs: 'हमें फ़ॉलो करें',
         contactUs: 'संपर्क करें',
         footerCopy: '© 2024 नगर विकास समिति। सर्वाधिकार सुरक्षित।',
-        footerMotto: 'समुदायों को सशक्त बनाना, शहरों का विकास करना।',
+        footerMotto: 'मेरे लोगों को अधिक शक्ति',
 
         // Admin & Leaders
         manageLeaders: 'नेताओं का प्रबंधन',
