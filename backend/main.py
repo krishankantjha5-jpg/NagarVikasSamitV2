@@ -367,6 +367,14 @@ def update_reality_status(reality_id: int, update: schemas.RealityUpdate, db: Se
         raise HTTPException(status_code=404, detail="Submission not found")
         
     db_reality.status = update.status
+    
+    if update.media is not None:
+        # Refresh media: delete old and add the updated list
+        db.query(models.Media).filter(models.Media.reality_id == reality_id).delete()
+        for m in update.media:
+            db_media = models.Media(url=m.url, file_type=m.file_type, reality_id=db_reality.id)
+            db.add(db_media)
+
     db.commit()
     db.refresh(db_reality)
     return db_reality

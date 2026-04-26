@@ -22,6 +22,7 @@ class RealityCreate(RealityBase):
 
 class RealityUpdate(BaseModel):
     status: str # approved, rejected
+    media: Optional[List[MediaBase]] = None
 
 class Reality(RealityBase):
     id: int

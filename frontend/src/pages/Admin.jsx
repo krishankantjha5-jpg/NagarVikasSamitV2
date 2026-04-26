@@ -65,7 +65,12 @@ const Admin = () => {
 
     const handleRealityStatus = async (id, status) => {
         try {
-            await axios.patch(`${API_BASE_URL}/admin/realities/${id}`, { status });
+            const updateData = { status };
+            // If we've removed media during preview, send the updated list
+            if (previewReality && previewReality.id === id) {
+                updateData.media = previewReality.media.map(m => ({ url: m.url, file_type: m.file_type }));
+            }
+            await axios.patch(`${API_BASE_URL}/admin/realities/${id}`, updateData);
             setSuccessMsg(`Reality ${status}!`);
             setErrorMsg('');
             setPreviewReality(null);
@@ -342,6 +347,40 @@ const Admin = () => {
     const inputStyle = { border: '2px solid #343a40', backgroundColor: '#fff' };
     const navStyle = { backgroundColor: '#1a237e', borderRadius: '12px' };
 
+    const crossButtonStyle = {
+        position: 'absolute',
+        top: '-10px',
+        right: '-10px',
+        width: '26px',
+        height: '26px',
+        borderRadius: '50%',
+        backgroundColor: '#ff0000',
+        color: 'white',
+        border: '2px solid white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '18px',
+        fontWeight: '900',
+        cursor: 'pointer',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        padding: '0',
+        lineHeight: '1',
+        zIndex: '100',
+        transition: 'transform 0.2s'
+    };
+
+    const removeFromLeaderPhoto = () => {
+        setLeaderForm({ ...leaderForm, image_url: '' });
+        setLeaderFiles([]);
+    };
+
+    const removeFromRealityMedia = (idx) => {
+        if (!previewReality) return;
+        const newMedia = previewReality.media.filter((_, i) => i !== idx);
+        setPreviewReality({ ...previewReality, media: newMedia });
+    };
+
     if (!isLoggedIn) {
         return (
             <Container className="py-5 d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
@@ -412,15 +451,15 @@ const Admin = () => {
                                                             {m.file_type === 'image' && (
                                                                 <img src={getMediaUrl(m.url)} alt="" className="w-100 h-100 rounded border" style={{ objectFit: 'cover' }} />
                                                             )}
-                                                            <Button 
-                                                                variant="danger" 
-                                                                size="sm" 
-                                                                className="position-absolute shadow-sm p-0 d-flex align-items-center justify-content-center rounded-circle"
-                                                                style={{ top: '-8px', right: '-8px', width: '22px', height: '22px' }}
+                                                            <button 
+                                                                type="button"
+                                                                className="shadow-sm d-flex align-items-center justify-content-center"
+                                                                style={crossButtonStyle}
                                                                 onClick={() => removeFromWorkMedia(idx)}
+                                                                title="Remove Media"
                                                             >
-                                                                Close
-                                                            </Button>
+                                                                &times;
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -482,9 +521,19 @@ const Admin = () => {
                                                 <Form.Group className="mb-3">
                                                     <Form.Label className="fw-bold">Photo</Form.Label>
                                                     {leaderForm.image_url && (
-                                                        <div className="mb-2 d-flex align-items-center gap-2">
-                                                            <img src={getMediaUrl(leaderForm.image_url)} alt="Current" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '50%' }} className="border" />
-                                                            <small className="text-muted">Current photo</small>
+                                                        <div className="mb-2 d-flex align-items-center gap-3">
+                                                            <div className="position-relative">
+                                                                <img src={getMediaUrl(leaderForm.image_url)} alt="Current" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%' }} className="border shadow-sm" />
+                                                                <button 
+                                                                    type="button"
+                                                                    style={{ ...crossButtonStyle, width: '20px', height: '20px', fontSize: '14px', top: '-5px', right: '-5px' }}
+                                                                    onClick={removeFromLeaderPhoto}
+                                                                    title="Remove Photo"
+                                                                >
+                                                                    &times;
+                                                                </button>
+                                                            </div>
+                                                            <small className="text-muted fw-bold">Current photo</small>
                                                         </div>
                                                     )}
                                                     <Form.Control type="file" accept="image/*" style={inputStyle} onChange={e => setLeaderFiles(e.target.files)} />
@@ -694,6 +743,14 @@ const Admin = () => {
                                                     <div className="d-flex flex-wrap gap-3 p-3 border rounded bg-white" style={{ minHeight: '200px' }}>
                                                         {previewReality.media.map((m, idx) => (
                                                             <div key={idx} className="border rounded shadow-sm overflow-hidden position-relative" style={{ width: '220px' }}>
+                                                                <button 
+                                                                    type="button"
+                                                                    style={crossButtonStyle}
+                                                                    onClick={() => removeFromRealityMedia(idx)}
+                                                                    title="Remove from submission"
+                                                                >
+                                                                    &times;
+                                                                </button>
                                                                 {m.file_type === 'image' ? (
                                                                     <img src={getMediaUrl(m.url)} className="w-100" style={{ height: '160px', objectFit: 'cover' }} alt="" />
                                                                 ) : (
@@ -745,15 +802,15 @@ const Admin = () => {
                                                             {m.file_type === 'image' && (
                                                                 <img src={getMediaUrl(m.url)} alt="" className="w-100 h-100 rounded border" style={{ objectFit: 'cover' }} />
                                                             )}
-                                                            <Button 
-                                                                variant="danger" 
-                                                                size="sm" 
-                                                                className="position-absolute shadow-sm p-0 d-flex align-items-center justify-content-center rounded-circle"
-                                                                style={{ top: '-6px', right: '-6px', width: '20px', height: '20px' }}
+                                                            <button 
+                                                                type="button"
+                                                                className="shadow-sm d-flex align-items-center justify-content-center"
+                                                                style={crossButtonStyle}
                                                                 onClick={() => removeFromPostMedia(idx)}
+                                                                title="Remove Media"
                                                             >
-                                                                Close
-                                                            </Button>
+                                                                &times;
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>

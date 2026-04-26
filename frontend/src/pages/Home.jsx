@@ -143,7 +143,7 @@ const Home = () => {
                                                     </div>
                                                     <Carousel className="rounded shadow overflow-hidden" pause="hover" interval={3000}>
                                                         {images.map((img, idx) => (
-                                                            <Carousel.Item key={idx} className="responsive-carousel-item" style={{ height: 'auto', minHeight: '300px', maxHeight: '500px' }}>
+                                                            <Carousel.Item key={idx} className="responsive-carousel-item" style={{ height: '450px' }}>
                                                                 <img src={getMediaUrl(img.url)} className="d-block w-100" style={{ height: '100%', objectFit: 'contain', background: '#f8f9fa' }} alt="Work" />
                                                             </Carousel.Item>
                                                         ))}
@@ -156,7 +156,7 @@ const Home = () => {
                                                     <div className="mb-3 text-secondary">
                                                         <h4 className="mb-0 fw-bold">{T.videos}</h4>
                                                     </div>
-                                                    <div className="video-scroll-container d-flex flex-column gap-3" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                                                    <div className={`video-scroll-container d-flex flex-column gap-3 ${videos.length === 1 ? 'justify-content-center' : 'justify-content-start'}`} style={{ height: '450px', overflowY: 'auto' }}>
                                                         {videos.map((vid, idx) => (
                                                             <div key={idx} className="rounded shadow-sm overflow-hidden border" style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                                                                 <iframe
