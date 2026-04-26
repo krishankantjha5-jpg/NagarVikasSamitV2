@@ -40,21 +40,6 @@ async def lifespan(app: FastAPI):
     try:
         models.Base.metadata.create_all(bind=engine)
         print("Database tables ensured.")
-        
-        # --- Auto Migration for video_url ---
-        from sqlalchemy import text
-        with engine.begin() as conn:
-            try:
-                # Check if the column exists by trying to select it
-                conn.execute(text("SELECT video_url FROM promises LIMIT 1"))
-            except Exception:
-                print("Migrating database: Adding video_url to promises table...")
-                try:
-                    conn.execute(text("ALTER TABLE promises ADD COLUMN video_url VARCHAR"))
-                    print("Migration successful.")
-                except Exception as ex:
-                    print(f"Auto-migration failed: {ex}")
-                    
     except Exception as e:
         print(f"DB init failed: {e}")
     yield
@@ -367,14 +352,6 @@ def update_reality_status(reality_id: int, update: schemas.RealityUpdate, db: Se
         raise HTTPException(status_code=404, detail="Submission not found")
         
     db_reality.status = update.status
-    
-    if update.media is not None:
-        # Refresh media: delete old and add the updated list
-        db.query(models.Media).filter(models.Media.reality_id == reality_id).delete()
-        for m in update.media:
-            db_media = models.Media(url=m.url, file_type=m.file_type, reality_id=db_reality.id)
-            db.add(db_media)
-
     db.commit()
     db.refresh(db_reality)
     return db_reality
