@@ -7,6 +7,7 @@ const t = {
 
         // Header
         orgName: 'नगर विकास समिति',
+        appTagline: 'More power to my people',
 
         // Home — Our Work
         ourWork: 'Our Work',
@@ -137,6 +138,7 @@ const t = {
 
         // Header
         orgName: 'नगर विकास समिति',
+        appTagline: 'मेरे लोगों को अधिक शक्ति',
 
         // Home — Our Work
         ourWork: 'हमारा कार्य',

@@ -17,6 +17,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
     const [password, setPassword] = useState('');
     const [location, setLocation] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -28,7 +29,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
             if (isForgotPassword) {
                 await axios.post(`${API_BASE_URL}/users/reset-password`, { mobile, new_password: password });
                 setError('');
-                alert('Password updated successfully! Please login with your new password.');
+                setSuccess('Password updated successfully! Please login with your new password.');
                 setIsForgotPassword(false);
                 setIsLogin(true);
             } else {
@@ -66,6 +67,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
             </Modal.Header>
             <Modal.Body>
                 {error && <Alert variant="danger">{error}</Alert>}
+                {success && <Alert variant="success">{success}</Alert>}
                 <Form onSubmit={handleSubmit}>
                     {!isLogin && !isForgotPassword && (
                         <Form.Group className="mb-3">
@@ -127,7 +129,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                             <>
                                 <a 
                                     href="#" 
-                                    onClick={(e) => { e.preventDefault(); setIsLogin(!isLogin); setError(''); }}
+                                    onClick={(e) => { e.preventDefault(); setIsLogin(!isLogin); setError(''); setSuccess(''); }}
                                     className="text-decoration-none d-block mb-2"
                                 >
                                     {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
@@ -135,7 +137,7 @@ const AuthModal = ({ show, onHide, onSuccess }) => {
                                 {isLogin && (
                                     <a 
                                         href="#" 
-                                        onClick={(e) => { e.preventDefault(); setIsForgotPassword(true); setError(''); }}
+                                        onClick={(e) => { e.preventDefault(); setIsForgotPassword(true); setError(''); setSuccess(''); }}
                                         className="text-decoration-none text-muted small"
                                     >
                                         Forgot Password?

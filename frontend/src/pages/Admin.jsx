@@ -10,6 +10,7 @@ const Admin = () => {
     const [loginError, setLoginError] = useState('');
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
 
     // Listings
     const [activities, setActivities] = useState([]);
@@ -33,7 +34,7 @@ const Admin = () => {
     const [videoUrls, setVideoUrls] = useState(['']);
     const [postVideoUrls, setPostVideoUrls] = useState(['']);
     const [formKey, setFormKey] = useState(0); // increment to force-clear file inputs
-    const [promiseForm, setPromiseForm] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '' });
+    const [promiseForm, setPromiseForm] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '', video_url: '' });
     const [donationGoal, setDonationGoal] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), target_amount: '', add_collection: '' });
     const [selectedLeaderId, setSelectedLeaderId] = useState('');
 
@@ -66,9 +67,14 @@ const Admin = () => {
         try {
             await axios.patch(`${API_BASE_URL}/admin/realities/${id}`, { status });
             setSuccessMsg(`Reality ${status}!`);
+            setErrorMsg('');
             setPreviewReality(null);
             refreshData();
-        } catch (err) { console.error("Status update failed", err); }
+            setTimeout(() => setSuccessMsg(''), 4000);
+        } catch (err) { 
+            console.error("Status update failed", err);
+            setErrorMsg('Failed to update reality status.');
+        }
     };
 
     const handleDeleteReality = async (id) => {
@@ -76,24 +82,31 @@ const Admin = () => {
         try {
             await axios.delete(`${API_BASE_URL}/admin/realities/${id}`);
             setSuccessMsg('Reality record deleted!');
+            setErrorMsg('');
             refreshData();
-        } catch (err) { console.error("Delete failed", err); }
+            setTimeout(() => setSuccessMsg(''), 4000);
+        } catch (err) { 
+            console.error("Delete failed", err);
+            setErrorMsg('Failed to delete reality record.');
+        }
     };
 
     const handleHelpStatus = async (id, status, comment) => {
         if (!comment || comment.trim() === '') {
-            alert('A comment is required to approve or reject an entry.');
+            setErrorMsg('A comment is required to approve or reject an entry.');
             return;
         }
         try {
             await axios.patch(`${API_BASE_URL}/admin/help-entries/${id}`, { status, comment });
             setSuccessMsg(`Help entry ${status}!`);
+            setErrorMsg('');
             setPreviewHelpEntry(null);
             setAdminComment('');
             refreshData();
+            setTimeout(() => setSuccessMsg(''), 4000);
         } catch (err) { 
             console.error("Status update failed", err);
-            alert(err.response?.data?.detail || 'Failed to update status');
+            setErrorMsg(err.response?.data?.detail || 'Failed to update status');
         }
     };
 
@@ -188,7 +201,8 @@ const Admin = () => {
             refreshData();
         } catch (err) { 
             const msg = err.response?.data?.detail || 'Operation failed.';
-            alert(msg); 
+            setErrorMsg(msg);
+            setSuccessMsg('');
         }
         finally { setLoading(false); }
     };
@@ -220,14 +234,18 @@ const Admin = () => {
             refreshData();
         } catch (err) { 
             const msg = err.response?.data?.detail || 'Operation failed.';
-            alert(msg); 
+            setErrorMsg(msg);
+            setSuccessMsg('');
         }
         finally { setLoading(false); }
     };
 
     const handlePromiseSubmit = async (e) => {
         e.preventDefault();
-        if (!selectedLeaderId) return alert('Please select a leader first.');
+        if (!selectedLeaderId) {
+            setErrorMsg('Please select a leader first.');
+            return;
+        }
         setLoading(true);
         try {
             await axios.post(`${API_BASE_URL}/promises`, { 
@@ -235,10 +253,13 @@ const Admin = () => {
                 leader_id: parseInt(selectedLeaderId) 
             });
             setSuccessMsg('Promise recorded!');
-            setPromiseForm({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '' });
+            setErrorMsg('');
+            setPromiseForm({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), amount: '', video_url: '' });
+            setTimeout(() => setSuccessMsg(''), 4000);
         } catch (err) { 
             const msg = err.response?.data?.detail || 'Failed to record promise.';
-            alert(msg); 
+            setErrorMsg(msg);
+            setSuccessMsg('');
         }
         finally { setLoading(false); }
     };
@@ -254,9 +275,12 @@ const Admin = () => {
                 add_collection: donationGoal.add_collection ? parseFloat(donationGoal.add_collection) : null
             });
             setSuccessMsg('Donation goal/collection updated successfully!');
+            setErrorMsg('');
             setDonationGoal({ ...donationGoal, target_amount: '', add_collection: '' });
+            setTimeout(() => setSuccessMsg(''), 4000);
         } catch (err) {
-            alert(err.response?.data?.detail || 'Failed to update donation goal.');
+            setErrorMsg(err.response?.data?.detail || 'Failed to update donation goal.');
+            setSuccessMsg('');
         } finally {
             setLoading(false);
         }
@@ -311,7 +335,8 @@ const Admin = () => {
         setPostVideoUrls(['']);
         setVideoUrls(['']);
         setFormKey(k => k + 1);
-        setTimeout(() => setSuccessMsg(''), 3000);
+        setErrorMsg('');
+        setTimeout(() => setSuccessMsg(''), 4000);
     };
 
     const inputStyle = { border: '2px solid #343a40', backgroundColor: '#fff' };
@@ -336,7 +361,8 @@ const Admin = () => {
     return (
         <Container className="py-5">
             <h1 className="mb-4 text-center fw-bold">Nagar Vikas Samiti Management</h1>
-            {successMsg && <Alert variant="success" className="mb-4 text-center fw-bold">{successMsg}</Alert>}
+            {successMsg && <Alert variant="success" className="mb-4 text-center fw-bold shadow-sm animate-fadeIn" onClose={() => setSuccessMsg('')} dismissible>{successMsg}</Alert>}
+            {errorMsg && <Alert variant="danger" className="mb-4 text-center fw-bold shadow-sm animate-fadeIn" onClose={() => setErrorMsg('')} dismissible>{errorMsg}</Alert>}
 
             <Tab.Container defaultActiveKey="work">
                 <Row className="g-4">
@@ -493,7 +519,7 @@ const Admin = () => {
 
                                         {selectedLeaderId && (
                                             <Row className="g-4">
-                                                <Col md={6}>
+                                                <Col md={12}>
                                                     <Card className="h-100 shadow-sm border-0">
                                                         <Card.Header className="bg-warning text-dark fw-bold py-3">
                                                             <span className="fs-5">Promise Slot</span>
@@ -538,24 +564,20 @@ const Admin = () => {
                                                                         onChange={e => setPromiseForm({ ...promiseForm, amount: e.target.value })} 
                                                                     />
                                                                 </Form.Group>
+                                                                <Form.Group className="mb-3">
+                                                                    <Form.Label className="fw-bold">YouTube Video Link (Optional)</Form.Label>
+                                                                    <Form.Control 
+                                                                        type="text" 
+                                                                        placeholder="e.g. https://www.youtube.com/watch?v=..." 
+                                                                        style={inputStyle} 
+                                                                        value={promiseForm.video_url} 
+                                                                        onChange={e => setPromiseForm({ ...promiseForm, video_url: e.target.value })} 
+                                                                    />
+                                                                </Form.Group>
                                                                 <Button variant="dark" type="submit" className="w-100 fw-bold py-2" disabled={loading}>
                                                                     {loading ? <Spinner size="sm" /> : 'Feed Promise'}
                                                                 </Button>
                                                             </Form>
-                                                        </Card.Body>
-                                                    </Card>
-                                                </Col>
-
-                                                <Col md={6}>
-                                                    <Card className="h-100 shadow-sm border-0 border-start border-4 border-success">
-                                                        <Card.Header className="bg-success text-white fw-bold py-3">
-                                                            <span className="fs-5">Reality Slot</span>
-                                                        </Card.Header>
-                                                        <Card.Body className="d-flex flex-column align-items-center justify-content-center text-muted">
-                                                            <div className="text-center">
-                                                                <h5 className="mt-3 fw-bold">Reality Tracking</h5>
-                                                                <p className="small">This section will be available soon to track the actual progress of promises.</p>
-                                                            </div>
                                                         </Card.Body>
                                                     </Card>
                                                 </Col>

@@ -11,11 +11,6 @@ const Home = () => {
     const [activities, setActivities] = useState([]);
     const [posts, setPosts] = useState([]);
     const [selectedActivity, setSelectedActivity] = useState(null);
-    const [showVolunteerModal, setShowVolunteerModal] = useState(false);
-    const [volunteerData, setVolunteerData] = useState({ name: '', number: '', address: '', association: 'Serious', pincode: '' });
-    const [verificationLoading, setVerificationLoading] = useState(false);
-    const [verificationStatus, setVerificationStatus] = useState({ type: '', message: '' });
-    const [isSubmitted, setIsSubmitted] = useState(false);
 
     // Filters
     const [filterYear, setFilterYear] = useState(null);
@@ -46,12 +41,6 @@ const Home = () => {
         fetchData();
     }, []);
 
-    // Listen for navbar button trigger
-    useEffect(() => {
-        const handler = () => { setShowVolunteerModal(true); detectLocationAndPincode(); };
-        window.addEventListener('openVolunteerModal', handler);
-        return () => window.removeEventListener('openVolunteerModal', handler);
-    }, []);
 
     useEffect(() => {
         const filtered = activities.filter(a => a.year === filterYear && a.month === filterMonth);
@@ -82,37 +71,6 @@ const Home = () => {
         return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
     };
 
-    const detectLocationAndPincode = () => {
-        setVerificationLoading(true);
-        setVerificationStatus({ type: 'info', message: T.detectingLocation });
-        if (!navigator.geolocation) {
-            setVerificationStatus({ type: 'danger', message: T.geolocationNotSupported });
-            setVerificationLoading(false);
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(async (position) => {
-            const { latitude, longitude } = position.coords;
-            try {
-                const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
-                const data = await res.json();
-                const allowed = ["121013", "121003", "201310", "210308", "110091"];
-                if (data.postcode) {
-                    setVolunteerData(prev => ({ ...prev, pincode: data.postcode }));
-                    if (allowed.includes(data.postcode)) {
-                        setVerificationStatus({ type: 'success', message: T.locationVerified(data.postcode) });
-                    } else {
-                        setVerificationStatus({ type: 'warning', message: T.autofillFailed });
-                    }
-                } else {
-                    setVerificationStatus({ type: 'warning', message: T.autofillFailed });
-                }
-            } catch (err) { setVerificationStatus({ type: 'warning', message: T.autofillFailed }); }
-            finally { setVerificationLoading(false); }
-        }, () => {
-            setVerificationStatus({ type: 'danger', message: T.accessDenied });
-            setVerificationLoading(false);
-        });
-    };
 
     const images = selectedActivity?.media.filter(m => m.file_type === 'image') || [];
     const videos = selectedActivity?.media.filter(m => m.file_type === 'video') || [];
@@ -326,47 +284,6 @@ const Home = () => {
                 </Card>
             </section>
 
-            {/* VOLUNTEER MODAL */}
-            <Modal show={showVolunteerModal} onHide={() => setShowVolunteerModal(false)} centered backdrop="static">
-                <Modal.Header closeButton><Modal.Title className="fw-bold">{T.volunteerApplication}</Modal.Title></Modal.Header>
-                <Modal.Body className="p-4">
-                    {isSubmitted ? (
-                        <div className="text-center py-4">
-                            <h4 className="fw-bold">{T.applicationReceived}</h4>
-                        </div>
-                    ) : (
-                        <Form onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (volunteerData.pincode) {
-                                setVerificationLoading(true);
-                                try {
-                                    await axios.post(`${API_BASE_URL}/volunteers`, volunteerData);
-                                    setIsSubmitted(true);
-                                    setTimeout(() => setShowVolunteerModal(false), 3000);
-                                } catch (err) {
-                                    const errorMsg = err.response?.data?.detail || 'Failed to submit.';
-                                    setVerificationStatus({ type: 'danger', message: errorMsg });
-                                } finally {
-                                    setVerificationLoading(false);
-                                }
-                            }
-                        }}>
-                            {verificationStatus.message && <Alert variant={verificationStatus.type} className="fw-bold">{verificationStatus.message}</Alert>}
-                            <Form.Group className="mb-3"><Form.Label className="fw-bold">{T.fullName}</Form.Label><Form.Control type="text" required onChange={e => setVolunteerData({ ...volunteerData, name: e.target.value })} /></Form.Group>
-                            <Form.Group className="mb-3"><Form.Label className="fw-bold">{T.mobile}</Form.Label><Form.Control type="tel" required pattern="[0-9]{10}" maxLength={10} placeholder="10-digit mobile number" onChange={e => setVolunteerData({ ...volunteerData, number: e.target.value.replace(/\D/g, '').slice(0, 10) })} /></Form.Group>
-                            <Form.Group className="mb-3"><Form.Label className="fw-bold">{T.address}</Form.Label><Form.Control as="textarea" rows={2} required onChange={e => setVolunteerData({ ...volunteerData, address: e.target.value })} /></Form.Group>
-                            <Form.Group className="mb-3"><Form.Label className="fw-bold">{T.pincode}</Form.Label><Form.Control type="text" required value={volunteerData.pincode} onChange={e => setVolunteerData({ ...volunteerData, pincode: e.target.value })} /></Form.Group>
-                            <Form.Group className="mb-4">
-                                <Form.Label className="fw-bold">{T.level}</Form.Label>
-                                <Form.Select onChange={e => setVolunteerData({ ...volunteerData, association: e.target.value })}><option value="Serious">{T.serious}</option><option value="Casual">{T.casual}</option></Form.Select>
-                            </Form.Group>
-                            <Button variant="primary" type="submit" className="w-100 py-2 fw-bold" disabled={verificationLoading}>
-                                {verificationLoading ? T.verifying : T.submitApplication}
-                            </Button>
-                        </Form>
-                    )}
-                </Modal.Body>
-            </Modal>
         </Container>
     );
 };

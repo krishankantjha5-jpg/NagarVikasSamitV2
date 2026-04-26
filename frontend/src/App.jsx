@@ -37,7 +37,7 @@ function AppInner() {
           <div style={{ padding: '2.5rem 0 1.5rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ flex: '1 1 220px' }}>
               <h5 style={{ fontWeight: 700, fontSize: '1.2rem', marginBottom: '0.5rem', color: '#fff' }}>{T.orgName}</h5>
-              <p style={{ color: '#adb5bd', fontSize: '0.88rem', lineHeight: '1.6', marginBottom: 0 }}>{T.footerTagline}</p>
+              <p style={{ color: '#adb5bd', fontSize: '0.88rem', lineHeight: '1.6', marginBottom: 0, fontStyle: 'italic' }}>"{T.appTagline}"</p>
             </div>
             <div style={{ flex: '1 1 200px' }}>
               <h6 style={{ fontWeight: 700, color: '#e9ecef', marginBottom: '1rem', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.8rem' }}>{T.followUs}</h6>
@@ -74,7 +74,7 @@ function AppInner() {
           </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '1rem 0', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
             <p style={{ margin: 0, color: '#6c757d', fontSize: '0.85rem' }}>{T.footerCopy}</p>
-            <small style={{ color: '#6c757d', fontSize: '0.8rem' }}>{T.footerMotto}</small>
+            <small style={{ color: '#6c757d', fontSize: '0.8rem', fontStyle: 'italic' }}>"{T.appTagline}"</small>
           </div>
         </Container>
       </footer>

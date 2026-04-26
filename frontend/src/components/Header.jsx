@@ -35,7 +35,10 @@ const Header = () => {
             <div className="header-container d-flex justify-content-between align-items-center px-3 px-md-5 py-2 py-md-3 bg-white border-bottom">
                 <div className="logo-section d-flex align-items-center gap-2 gap-md-3">
                     <img src={logo} alt="Logo" style={{ width: 'clamp(45px, 8vw, 65px)', height: 'clamp(45px, 8vw, 65px)', borderRadius: '50%', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
-                    <h1 style={{ margin: 0, fontSize: 'clamp(1.1rem, 4vw, 1.7rem)', color: '#1e293b', fontWeight: '800', letterSpacing: '-0.5px' }}>{T.orgName}</h1>
+                    <div className="d-flex flex-column justify-content-center">
+                        <h1 style={{ margin: 0, fontSize: 'clamp(1.1rem, 4vw, 1.7rem)', color: '#1e293b', fontWeight: '800', letterSpacing: '-0.5px', lineHeight: '1.1' }}>{T.orgName}</h1>
+                        <span style={{ fontSize: 'clamp(0.7rem, 2vw, 0.9rem)', color: '#d97706', fontWeight: '700', marginTop: '2px', fontStyle: 'italic' }}>"{T.appTagline}"</span>
+                    </div>
                 </div>
                 <div className="chakra-section d-none d-sm-flex align-items-center" style={{ animation: 'spin 20s linear infinite' }}>
                     <svg viewBox="0 0 100 100" width="clamp(35px, 6vw, 55px)" height="clamp(35px, 6vw, 55px)" xmlns="http://www.w3.org/2000/svg">

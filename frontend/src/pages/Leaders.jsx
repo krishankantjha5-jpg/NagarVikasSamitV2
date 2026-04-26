@@ -23,6 +23,7 @@ const Leaders = () => {
     const [realityFiles, setRealityFiles] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [submitError, setSubmitError] = useState('');
     const [availableDates, setAvailableDates] = useState([]);
 
     useEffect(() => {
@@ -102,11 +103,14 @@ const Leaders = () => {
             });
 
             setSubmitSuccess(true);
+            setSubmitError('');
             setRealityForm({ area: '', month: now.getMonth() + 1, year: now.getFullYear(), video_url: '' });
             setRealityFiles([]);
             setTimeout(() => setSubmitSuccess(false), 5000);
         } catch (err) {
             console.error(err);
+            setSubmitError(err.response?.data?.detail || 'Failed to submit reality check.');
+            setSubmitSuccess(false);
         } finally {
             setSubmitting(false);
         }
@@ -267,14 +271,14 @@ const Leaders = () => {
                             {/* REALITY SECTION */}
                             <div className="p-4">
                                 <div className="rounded-4 overflow-hidden border shadow-sm">
-                                    <div className="p-3 fw-bold text-center bg-success text-white fs-5 d-flex justify-content-between align-items-center px-4">
-                                        <div className="d-flex gap-3 align-items-center">
-                                            <span className="text-uppercase ls-1 small">{T.realitySlot}</span>
-                                            <div className="btn-group bg-white rounded-pill p-1 shadow-sm" style={{ height: '36px' }}>
+                                    <div className="p-3 fw-bold text-center bg-success text-white fs-5 d-flex justify-content-between align-items-center px-2 px-md-4">
+                                        <div className="d-flex gap-2 gap-md-3 align-items-center flex-wrap justify-content-center w-100">
+                                            <span className="text-uppercase ls-1 small mb-0">{T.realitySlot}</span>
+                                            <div className="btn-group bg-white rounded-pill p-1 shadow-sm">
                                                 <Button
                                                     variant={realityTab === 'see' ? 'success' : 'light'}
                                                     size="sm"
-                                                    className="rounded-pill px-3 py-0 border-0"
+                                                    className="rounded-pill px-2 px-md-3 py-1 border-0 text-nowrap"
                                                     onClick={() => setRealityTab('see')}
                                                 >
                                                     {T.seeReality}
@@ -282,7 +286,7 @@ const Leaders = () => {
                                                 <Button
                                                     variant={realityTab === 'show' ? 'success' : 'light'}
                                                     size="sm"
-                                                    className="rounded-pill px-3 py-0 border-0"
+                                                    className="rounded-pill px-2 px-md-3 py-1 border-0 text-nowrap"
                                                     onClick={() => setRealityTab('show')}
                                                 >
                                                     {T.showReality}
@@ -345,6 +349,7 @@ const Leaders = () => {
                                             <div className="max-w-600 mx-auto p-3">
                                                 <h4 className="fw-bold text-center mb-4">{T.showReality}</h4>
                                                 {submitSuccess && <Alert variant="success">{T.realitySubmitted}</Alert>}
+                                                {submitError && <Alert variant="danger">{submitError}</Alert>}
                                                 <Form onSubmit={handleRealitySubmit}>
                                                     <Row className="g-3">
                                                         <Col md={12}>
