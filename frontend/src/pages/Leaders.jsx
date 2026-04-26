@@ -252,6 +252,7 @@ const Leaders = () => {
                                                                         className="w-100 h-100"
                                                                         style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
                                                                         allowFullScreen
+                                                                        referrerPolicy="strict-origin-when-cross-origin"
                                                                     ></iframe>
                                                                 </div>
                                                             </Col>
@@ -329,6 +330,7 @@ const Leaders = () => {
                                                                                             className="w-100 h-100"
                                                                                             style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
                                                                                             allowFullScreen
+                                                                                            referrerPolicy="strict-origin-when-cross-origin"
                                                                                         ></iframe>
                                                                                     </div>
                                                                                 ))}

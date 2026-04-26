@@ -165,6 +165,7 @@ const Home = () => {
                                                                     className="w-100 h-100"
                                                                     style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
                                                                     allowFullScreen
+                                                                    referrerPolicy="strict-origin-when-cross-origin"
                                                                 ></iframe>
                                                             </div>
                                                         ))}
@@ -240,6 +241,7 @@ const Home = () => {
                                                                                     title="Announcement Video"
                                                                                     style={{ width: '100%', height: '100%', border: 'none', minHeight: '300px' }}
                                                                                     allowFullScreen
+                                                                                    referrerPolicy="strict-origin-when-cross-origin"
                                                                                 ></iframe>
                                                                             </div>
                                                                         )}
